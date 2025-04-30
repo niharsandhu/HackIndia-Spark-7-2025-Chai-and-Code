@@ -1,14 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const ngoController = require('../controllers/ngoController');
+const { 
+  ngoController, 
+  aidController, 
+  donationController, 
+  userController 
+} = require('../controllers/donationController');
 
-// Route to register NGO (after MetaMask login and DARPAN ID submission)
-router.post('/register', ngoController.registerNgo);
+// User routes
+router.post('/users', userController.createUser);
+router.get('/users/:userId', userController.getUserById);
 
-// Route to get all NGOs (for admin dashboard)
-router.get('/all', ngoController.getAllNgos);
+// NGO routes
+router.post('/ngos', ngoController.registerNGO);
+router.put('/ngos/:ngoId/status', ngoController.updateNGOStatus);
+router.get('/ngos/in-need', ngoController.getNGOsInNeed);
+router.get('/ngos/:ngoId', ngoController.getNGOById);
 
-// Route to approve or reject NGO (by admin)
-router.post('/verify', ngoController.verifyNgo);
+
+// Aid routes
+router.post('/aid-cards', aidController.createAidCard);
+router.post('/aid-distribution', aidController.recordAidDistribution);
+router.get('/aid-distribution/:beneficiaryId', aidController.getAidDistribution);
+
+// Donation routes
+router.post('/donations', donationController.processDonation);
+router.post('/fundings', donationController.fundNGO);
+router.post('/fundings/return', donationController.recordReturnedFunds);
+router.get('/donation-stats', donationController.getDonationStats);
+router.get('/donations', donationController.getDonationHistory);
+router.get('/fundings', donationController.getFundingHistory);
 
 module.exports = router;

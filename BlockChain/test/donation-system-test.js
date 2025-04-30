@@ -13,31 +13,33 @@ describe("Donation Platform System", function () {
     // Deploy NGORegistry
     NGORegistry = await ethers.getContractFactory("NGORegistry");
     ngoRegistry = await NGORegistry.deploy();
-    await ngoRegistry.deployed(); // Wait for deployment
-    console.log("NGORegistry deployed at:", ngoRegistry.address); // Log the address
+    await ngoRegistry.waitForDeployment(); // Wait for deployment
+    console.log("NGORegistry deployed at:", ngoRegistry.target); // Log the address
 
     // Deploy AidTracker
     AidTracker = await ethers.getContractFactory("AidTracker");
     aidTracker = await AidTracker.deploy();
-    await aidTracker.deployed(); // Wait for deployment
-    console.log("AidTracker deployed at:", aidTracker.address); // Log the address
+    await aidTracker.waitForDeployment(); // Wait for deployment
+    console.log("AidTracker deployed at:", aidTracker.target); // Log the address
 
     // Log addresses before deploying DonationVault
-    console.log("NGORegistry address before DonationVault deployment:", ngoRegistry.address);
-    console.log("AidTracker address before DonationVault deployment:", aidTracker.address);
+    console.log("NGORegistry address before DonationVault deployment:", ngoRegistry.target);
+    console.log("AidTracker address before DonationVault deployment:", aidTracker.target);
 
     // Deploy DonationVault
     DonationVault = await ethers.getContractFactory("DonationVault");
-    donationVault = await DonationVault.deploy(ngoRegistry.address, aidTracker.address);
-    await donationVault.deployed(); // Wait for deployment
-    console.log("DonationVault deployed at:", donationVault.address); // Log the address
+    donationVault = await DonationVault.deploy(ngoRegistry.target, aidTracker.target);
+    await donationVault.waitForDeployment(); // Wait for deployment
+    console.log("DonationVault deployed at:", donationVault.target); // Log the address
   });
 
   describe("NGORegistry", function () {
     it("Should register a new NGO", async function () {
+      console.log("Registering a new NGO...");
       await ngoRegistry.registerNGO(ngoWallet1.address, "NGO 1", "ipfs://metadata1");
 
       const ngo = await ngoRegistry.ngos(0);
+      console.log("Registered NGO:", ngo);
       expect(ngo.wallet).to.equal(ngoWallet1.address);
       expect(ngo.name).to.equal("NGO 1");
       expect(ngo.metadata).to.equal("ipfs://metadata1");
@@ -106,7 +108,7 @@ describe("Donation Platform System", function () {
       const donationAmount = ethers.parseEther("1.0"); // Updated for ethers v6
 
       await donor1.sendTransaction({
-        to: donationVault.address, // Use address directly
+        to: donationVault.target, // Use address directly
         value: donationAmount
       });
 
@@ -119,7 +121,7 @@ describe("Donation Platform System", function () {
       // Receive donation
       const donationAmount = ethers.parseEther("1.0"); // Updated for ethers v6
       await donor1.sendTransaction({
-        to: donationVault.address, // Use address directly
+        to: donationVault.target, // Use address directly
         value: donationAmount
       });
 
@@ -142,7 +144,7 @@ describe("Donation Platform System", function () {
       // Receive donation and fund NGO
       const donationAmount = ethers.parseEther("1.0"); // Updated for ethers v6
       await donor1.sendTransaction({
-        to: donationVault.address, // Use address directly
+        to: donationVault.target, // Use address directly
         value: donationAmount
       });
 
