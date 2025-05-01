@@ -36,8 +36,7 @@ const crisisSchema = new mongoose.Schema(
     },
     peopleAffected: {
       type: Number,
-      required: true,
-      min: 1
+
     },
     situationRating: {
       type: Number,

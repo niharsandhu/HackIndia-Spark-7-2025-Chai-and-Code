@@ -46,7 +46,26 @@ const createCrisis = async (req, res) => {
       return res.status(500).json({ message: 'Server error while creating crisis.' });
     }
   };
+
+
+// Controller function to fetch all crises and their associated NGO details
+const getAllCrises = async (req, res) => {
+  try {
+    // Fetch all crises and populate the ngoId field to get NGO details
+    const crises = await Crisis.find().populate('ngoId');
+
+    if (!crises || crises.length === 0) {
+      return res.status(404).json({ message: 'No crises found' });
+    }
+
+    // Return all crises with their associated NGO details
+    res.status(200).json(crises);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+
   
 module.exports = {
-  createCrisis
+  createCrisis,getAllCrises
 };

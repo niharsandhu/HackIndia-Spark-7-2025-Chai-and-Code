@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import dynamic from 'next/dynamic';
-import Navbar from "@/components/navbar";
 import { AlertTriangle, Heart, MessageCircle, Share2, Users, Flame, TrendingUp, ArrowRight, Info, Activity, Globe, Eye, ExternalLink, ChevronDown, Search, Bell, Menu, X } from "lucide-react";
-import CrisisReportForm from "@/components/CrisisReportForm"; 
-import axios from "axios";
+import Navbar from "@/components/navbar";
+import CrisisReportForm from "@/components/CrisisReportForm"; // Import the CrisisReportForm component
 
 const MotionDiv = dynamic(() => import('framer-motion').then(mod => mod.motion.div), { ssr: false });
 
@@ -16,7 +15,6 @@ export default function DisasterReliefCommunity() {
   const [inputValue, setInputValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentDisaster, setCurrentDisaster] = useState(null);
-  const [selectedNgoId, setSelectedNgoId] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [donationAmount, setDonationAmount] = useState(100);
@@ -24,73 +22,136 @@ export default function DisasterReliefCommunity() {
   const [animateCount, setAnimateCount] = useState(false);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [isReportFormOpen, setIsReportFormOpen] = useState(false);
-  const [disasters, setDisasters] = useState([]);
 
-  const [donorId, setDonorId] = useState(null);
-
-useEffect(() => {
-  const storedUserId = localStorage.getItem("userId");
-  if (storedUserId) {
-    setDonorId(storedUserId);
-    console.log("Fetched donorId from localStorage:", storedUserId);
-  }
-}, []);
-
-  // Fetch disasters from the API
-  useEffect(() => {
-    const fetchDisasters = async () => {
-      try {
-        const response = await axios.get("http://localhost:3002/api/allcrises");
-        setDisasters(response.data);
-        console.log("Fetched disasters:", response.data);
-      } catch (error) {
-        console.error("Error fetching disaster data", error);
-        // Set some fallback data in case the API fails
-        setDisasters([
-          {
-            id: "1",
-            name: "Cyclone Mocha",
-            place: "Bay of Bengal, India",
-            description: "Category 5 cyclone causing widespread flooding and damage",
-            situationRating: 9.2,
-            timeline: "Ongoing",
-            coverImage: "/api/placeholder/800/600",
-            logo: "/api/placeholder/64/64",
-            organization: "Disaster Relief India",
-            raised: 250000,
-            fundsRequired: 1000000,
-            updates: [
-              {
-                time: "2 hours ago",
-                text: "Emergency teams deployed to coastal regions, evacuation underway"
-              }
-            ]
-          }
-        ]);
-      }
-    };
-
-    fetchDisasters();
-  }, []);
-
-  const handleDonate = async (ngoId, amount) => {
-    try {
-      const response = await axios.post("http://localhost:3002/api/send-funds", {
-        donorId,
-        ngoId,
-        amount
-      });
-      console.log("Donation successful:", response.data);
-    } catch (error) {
-      console.error("Donation failed:", error);
+  // Sample data with severity levels
+  const [disasters, setDisasters] = useState([
+    {
+      id: 1,
+      title: "Southeast Asia Flooding Crisis",
+      location: "Thailand, Cambodia, Vietnam",
+      organization: "Global Flood Relief",
+      logo: "/api/placeholder/40/40",
+      coverImage: "/api/placeholder/800/400",
+      description: "Devastating floods have displaced over 250,000 people across Southeast Asia. Critical needs include clean water, shelter, and medical supplies.",
+      severity: 9.8, // On a scale of 1-10
+      raised: 782500,
+      goal: 2000000,
+      timeline: "3 days left for critical phase",
+      updates: [
+        { time: "2 hours ago", text: "50 rescue teams deployed to Mekong Delta" },
+        { time: "5 hours ago", text: "Emergency supplies airlifted to isolated communities" }
+      ],
+      impactStats: {
+        peopleAffected: "250,000+",
+        areaAffected: "6 provinces",
+        criticalNeeds: ["Clean water", "Medicine", "Shelter"]
+      },
+      engagement: { donations: 4205, shares: 12350, volunteers: 389 }
+    },
+    {
+      id: 2,
+      title: "Western Wildfire Emergency",
+      location: "California, Oregon",
+      organization: "Wildfire Response Network",
+      logo: "/api/placeholder/40/40",
+      coverImage: "/api/placeholder/800/400",
+      description: "Wildfires have burned over 1.2 million acres and destroyed hundreds of homes. Evacuation centers are at capacity and need supplies.",
+      severity: 8.5,
+      raised: 650000,
+      goal: 1500000,
+      timeline: "5 days left for evacuation support",
+      updates: [
+        { time: "6 hours ago", text: "New evacuation orders for Mendocino County" },
+        { time: "1 day ago", text: "Containment at 15%, expected to grow with weather change" }
+      ],
+      impactStats: {
+        peopleAffected: "120,000+",
+        areaAffected: "1.2M acres",
+        criticalNeeds: ["Temporary housing", "Respirators", "Animal rescue"]
+      },
+      engagement: { donations: 3150, shares: 8920, volunteers: 276 }
+    },
+    {
+      id: 3,
+      title: "Caribbean Hurricane Recovery",
+      location: "Dominican Republic, Haiti",
+      organization: "Island Disaster Services",
+      logo: "/api/placeholder/40/40",
+      coverImage: "/api/placeholder/800/400",
+      description: "Hurricane Maria's aftermath has left coastal communities without power, water or communications. Infrastructure damage is extensive.",
+      severity: 9.2,
+      raised: 890000,
+      goal: 3000000,
+      timeline: "Critical need for next 7 days",
+      updates: [
+        { time: "3 hours ago", text: "First aid stations established in Port-au-Prince" },
+        { time: "1 day ago", text: "Communications restored to northern coastal areas" }
+      ],
+      impactStats: {
+        peopleAffected: "320,000+",
+        areaAffected: "12 coastal towns",
+        criticalNeeds: ["Power generators", "Medical supplies", "Food provisions"]
+      },
+      engagement: { donations: 5120, shares: 14200, volunteers: 412 }
+    },
+    {
+      id: 4,
+      title: "East Africa Drought Relief",
+      location: "Somalia, Ethiopia, Kenya",
+      organization: "African Relief Coalition",
+      logo: "/api/placeholder/40/40",
+      coverImage: "/api/placeholder/800/400",
+      description: "Prolonged drought has created severe food insecurity affecting millions. Crops have failed for three consecutive seasons.",
+      severity: 9.5,
+      raised: 1250000,
+      goal: 5000000,
+      timeline: "Long-term crisis, immediate food needs",
+      updates: [
+        { time: "5 hours ago", text: "Food distribution begun in northern Ethiopia" },
+        { time: "2 days ago", text: "Water purification systems deployed to 12 communities" }
+      ],
+      impactStats: {
+        peopleAffected: "4.5 million",
+        areaAffected: "3 countries",
+        criticalNeeds: ["Food", "Water purification", "Agricultural support"]
+      },
+      engagement: { donations: 8700, shares: 19500, volunteers: 625 }
+    },
+    {
+      id: 5,
+      title: "Nepal Earthquake Response",
+      location: "Kathmandu Valley, Nepal",
+      organization: "Mountain Relief Initiative",
+      logo: "/api/placeholder/40/40",
+      coverImage: "/api/placeholder/800/400",
+      description: "A 7.2 magnitude earthquake has caused widespread damage. Remote villages are cut off from aid and medical care.",
+      severity: 9.7,
+      raised: 980000,
+      goal: 2500000,
+      timeline: "48 hours critical for search and rescue",
+      updates: [
+        { time: "1 hour ago", text: "Search teams have reached Gorkha district" },
+        { time: "8 hours ago", text: "Field hospital established in Kathmandu" }
+      ],
+      impactStats: {
+        peopleAffected: "180,000+",
+        areaAffected: "4 districts",
+        criticalNeeds: ["Search & rescue", "Medical care", "Temporary shelter"]
+      },
+      engagement: { donations: 6230, shares: 15800, volunteers: 320 }
     }
-  };
-  
+  ]);
 
   // Sort disasters by severity
-  const sortedDisasters = [...disasters].sort((a, b) => 
-    (b.situationRating || 0) - (a.situationRating || 0)
-  );
+  const sortedDisasters = [...disasters].sort((a, b) => b.severity - a.severity);
+
+  // Notifications
+  const notifications = [
+    { id: 1, title: "New flooding reported in southern Vietnam", time: "15 mins ago", isNew: true },
+    { id: 2, title: "Your donation of $100 has been processed", time: "1 hour ago", isNew: true },
+    { id: 3, title: "Emergency alert: Earthquake in Nepal", time: "3 hours ago", isNew: false },
+    { id: 4, title: "New volunteer opportunity in California", time: "5 hours ago", isNew: false },
+  ];
 
   // Auto-increment impact counter
   useEffect(() => {
@@ -116,17 +177,38 @@ useEffect(() => {
     }
   };
 
-  // Open modal with specific disaster data
   const openDisasterModal = (disaster) => {
     setCurrentDisaster(disaster);
-    setSelectedNgoId(disaster.ngoId._id); 
     setIsModalOpen(true);
   };
 
-  // Close modal
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setCurrentDisaster(null);
+  // Calculate donation progress percentage
+  const getProgressPercentage = (raised, goal) => {
+    return Math.min(100, Math.round((raised / goal) * 100));
+  };
+
+  // Get severity indicator color
+  const getSeverityColor = (severity) => {
+    if (severity >= 9) return "text-red-500";
+    if (severity >= 7) return "text-orange-500";
+    return "text-yellow-500";
+  };
+
+  const getSeverityLabel = (severity) => {
+    if (severity >= 9) return "Critical";
+    if (severity >= 7) return "Severe";
+    if (severity >= 5) return "Moderate";
+    return "Developing";
+  };
+
+  const toggleNotifications = () => {
+    setIsNotificationOpen(!isNotificationOpen);
+    setIsSearchOpen(false);
+  };
+
+  const toggleSearch = () => {
+    setIsSearchOpen(!isSearchOpen);
+    setIsNotificationOpen(false);
   };
 
   const openReportForm = () => {
@@ -137,27 +219,15 @@ useEffect(() => {
     setIsReportFormOpen(false);
   };
 
-  // Calculate donation progress percentage
-  const getProgressPercentage = (raised, goal) => {
-    if (!raised || !goal) return 0;
-    return Math.min(100, Math.round((raised / goal) * 100));
-  };
+  useEffect(() => {
+    // Apply animations after the component has mounted
+    const dots = document.querySelectorAll('.animated-dot');
+    dots.forEach((dot, i) => {
+      dot.style.opacity = 0.1 + Math.random() * 0.5;
+      dot.style.transform = `translateX(${Math.random() * window.innerWidth}px) translateY(${Math.random() * window.innerHeight}px)`;
+    });
+  }, []);
 
-  // Get severity indicator color
-  const getSeverityColor = (severity) => {
-    if (!severity) return "text-gray-500";
-    if (severity >= 9) return "text-red-500";
-    if (severity >= 7) return "text-orange-500";
-    return "text-yellow-500";
-  };
-
-  const getSeverityLabel = (severity) => {
-    if (!severity) return "Unknown";
-    if (severity >= 9) return "Critical";
-    if (severity >= 7) return "Severe";
-    if (severity >= 5) return "Moderate";
-    return "Developing";
-  };
   return (
     <>
       <div className="min-h-screen bg-black text-white">
@@ -341,149 +411,111 @@ useEffect(() => {
 
           {/* Enhanced Disaster cards grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {sortedDisasters.map((disaster, index) => (
-            <MotionDiv
-              key={disaster.id ?? `disaster-${index}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-black backdrop-blur-sm rounded-xl overflow-hidden shadow-xl border border-gray-700 hover:border-yellow-500/50 transition-all duration-300 cursor-pointer group"
-              onClick={() => openDisasterModal(disaster)}
-              onMouseEnter={() => setHoveredCard(disaster.id)}
-              onMouseLeave={() => setHoveredCard(null)}
-            >
-              {/* Severity indicator */}
-              <div className="flex justify-between items-center px-4 py-2 bg-gray-900/80">
-                <div className="flex items-center">
-                  <div
-                    className={`w-3 h-3 rounded-full mr-2 ${
-                      disaster.situationRating >= 9
-                        ? "bg-red-500 animate-pulse"
-                        : disaster.situationRating >= 7
-                        ? "bg-orange-500"
-                        : "bg-yellow-500"
-                    }`}
-                  ></div>
-                  <span
-                    className={`text-sm font-medium ${getSeverityColor(
-                      disaster.situationRating
-                    )}`}
+            {sortedDisasters.map((disaster) => (
+              <MotionDiv
+                key={disaster.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-black backdrop-blur-sm rounded-xl overflow-hidden shadow-xl border border-gray-700 hover:border-yellow-500/50 transition-all duration-300 cursor-pointer group"
+                onClick={() => openDisasterModal(disaster)}
+                onMouseEnter={() => setHoveredCard(disaster.id)}
+                onMouseLeave={() => setHoveredCard(null)}
+              >
+                {/* Severity indicator */}
+                <div className="flex justify-between items-center px-4 py-2 bg-gray-900/80">
+                  <div className="flex items-center">
+                    <div className={`w-3 h-3 rounded-full mr-2 ${
+                      disaster.severity >= 9 ? 'bg-red-500 animate-pulse' :
+                      disaster.severity >= 7 ? 'bg-orange-500' : 'bg-yellow-500'
+                    }`}></div>
+                    <span className={`text-sm font-medium ${getSeverityColor(disaster.severity)}`}>
+                      {getSeverityLabel(disaster.severity)} ({disaster.severity.toFixed(1)})
+                    </span>
+                  </div>
+                  <span className="text-sm text-gray-400">{disaster.timeline}</span>
+                </div>
+
+                {/* Cover image */}
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={disaster.coverImage}
+                    alt={disaster.title}
+                    fill
+                    className="object-cover transform transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent h-24"></div>
+                  <div className="absolute bottom-0 left-0 p-4">
+                    <div className="flex items-center mb-2">
+                      <div className="w-8 h-8 rounded-full overflow-hidden mr-2 bg-gray-700 border border-gray-600">
+                        <Image
+                          src={disaster.logo}
+                          alt={disaster.organization}
+                          width={32}
+                          height={32}
+                        />
+                      </div>
+                      <span className="text-sm font-medium">{disaster.organization}</span>
+                    </div>
+                  </div>
+
+                  {/* Quick action buttons on hover */}
+                  <MotionDiv
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: hoveredCard === disaster.id ? 1 : 0 }}
+                    className="absolute top-2 right-2 flex gap-2"
                   >
-                    {getSeverityLabel(disaster.situationRating)} (
-                    {typeof disaster.situationRating === "number"
-                      ? disaster.situationRating.toFixed(1)
-                      : "N/A"}
-                    )
-                  </span>
+                    <button className="p-2 bg-gray-800/80 backdrop-blur-sm rounded-full hover:bg-red-500/80 transition-colors">
+                      <Heart className="h-4 w-4" />
+                    </button>
+                    <button className="p-2 bg-gray-800/80 backdrop-blur-sm rounded-full hover:bg-blue-500/80 transition-colors">
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                  </MotionDiv>
                 </div>
-                <span className="text-sm text-gray-400">{disaster.timeline}</span>
-              </div>
 
-              {/* Cover image */}
-              <div className="relative h-48 overflow-hidden">
-                <Image
-                  src={disaster.coverImage || "/api/placeholder/800/600"}
-                  alt={disaster.title || "Disaster"}
-                  fill
-                  className="object-cover transform transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent h-24"></div>
-                <div className="absolute bottom-0 left-0 p-4">
-                  <div className="flex items-center mb-2">
-                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2 bg-gray-700 border border-gray-600">
-                      <Image
-                        src={disaster.logo || "/api/placeholder/32/32"}
-                        alt={disaster.organization || "Organization"}
-                        width={32}
-                        height={32}
-                      />
+                {/* Content */}
+                <div className="p-4">
+                  <h3 className="text-xl font-semibold mb-1 group-hover:text-yellow-400 transition-colors">{disaster.title}</h3>
+                  <p className="text-sm text-gray-400 mb-3 flex items-center">
+                    <Globe className="h-3 w-3 mr-1" />
+                    {disaster.location}
+                  </p>
+
+                  <p className="text-sm text-gray-300 mb-4 line-clamp-3">{disaster.description}</p>
+
+                  {/* Progress bar */}
+                  <div className="mb-2">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>${(disaster.raised / 1000000).toFixed(1)}M raised</span>
+                      <span>${(disaster.goal / 1000000).toFixed(1)}M goal</span>
                     </div>
-                    <span className="text-sm font-medium">{disaster.ngoId?.name}</span>
-                  </div>
-                </div>
-
-                {/* Quick action buttons on hover */}
-                <MotionDiv
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: hoveredCard === disaster.id ? 1 : 0 }}
-                  className="absolute top-2 right-2 flex gap-2"
-                >
-                  <button className="p-2 bg-gray-800/80 backdrop-blur-sm rounded-full hover:bg-red-500/80 transition-colors">
-                    <Heart className="h-4 w-4" />
-                  </button>
-                  <button className="p-2 bg-gray-800/80 backdrop-blur-sm rounded-full hover:bg-blue-500/80 transition-colors">
-                    <Share2 className="h-4 w-4" />
-                  </button>
-                </MotionDiv>
-              </div>
-
-              {/* Content */}
-              <div className="p-4">
-                <h3 className="text-xl font-semibold mb-1 group-hover:text-yellow-400 transition-colors">
-                  {disaster.name}
-                </h3>
-                <p className="text-sm text-gray-400 mb-3 flex items-center">
-                  <Globe className="h-3 w-3 mr-1" />
-                  {disaster.place}
-                </p>
-
-                <p className="text-sm text-gray-300 mb-4 line-clamp-3">
-                  {disaster.description}
-                </p>
-
-                {/* Progress bar */}
-                <div className="mb-2">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>₹{disaster.ngoId?.totalDonationReceived ?? 0} raised</span>
-                    <span>₹{disaster.fundsRequired ?? 0} goal</span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
-                    <MotionDiv
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: `${getProgressPercentage(
-                          disaster.raised ?? 0,
-                          disaster.fundsRequired ?? 1
-                        )}%`,
-                      }}
-                      transition={{ duration: 1, delay: 0.2 }}
-                      className="bg-gradient-to-r from-yellow-500 to-yellow-600 h-full rounded-full relative"
-                    >
-                      <div className="absolute top-0 left-0 w-full h-full bg-white opacity-30 rounded-full animate-pulse"></div>
-                    </MotionDiv>
-                  </div>
-                </div>
-
-                {/* Latest update */}
-                {disaster.updates && disaster.updates[0] && (
-                  <div className="bg-gray-700/30 backdrop-blur-sm rounded-lg p-3 mb-4 text-sm border border-gray-700 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent to-gray-900 opacity-20"></div>
-                    <div className="relative z-10">
-                      <p className="font-medium text-orange-300 mb-1">
-                        Latest Update • {disaster.updates[0].time}
-                      </p>
-                      <p>{disaster.updates[0].text}</p>
+                    <div className="w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                      <MotionDiv
+                        initial={{ width: 0 }}
+                        animate={{ width: `${getProgressPercentage(disaster.raised, disaster.goal)}%` }}
+                        transition={{ duration: 1, delay: 0.2 }}
+                        className="bg-gradient-to-r from-yellow-500 to-yellow-600 h-full rounded-full relative"
+                      >
+                        <div className="absolute top-0 left-0 w-full h-full bg-white opacity-30 rounded-full animate-pulse"></div>
+                      </MotionDiv>
                     </div>
                   </div>
-                )}
-              </div>
-            </MotionDiv>
-          ))}
-</div>
-   {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-1/2">
-            <h2 className="text-2xl font-semibold">{currentDisaster?.ngoId?.name}</h2>
-            <p>{currentDisaster?.description}</p>
-            <button
-              onClick={closeModal}
-              className="mt-4 p-2 bg-red-500 text-white rounded"
-            >
-              Close
-            </button>
+
+                  {/* Latest update */}
+                  {disaster.updates && disaster.updates[0] && (
+                    <div className="bg-gray-700/30 backdrop-blur-sm rounded-lg p-3 mb-4 text-sm border border-gray-700 relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent to-gray-900 opacity-20"></div>
+                      <div className="relative z-10">
+                        <p className="font-medium text-orange-300 mb-1">Latest Update • {disaster.updates[0].time}</p>
+                        <p>{disaster.updates[0].text}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </MotionDiv>
+            ))}
           </div>
-        </div>
-      )}
         </div>
 
         {/* Donation Impact Section */}
@@ -620,8 +652,8 @@ useEffect(() => {
               {/* Modal header with close button */}
               <div className="relative h-64">
                 <Image
-                  src={currentDisaster.coverImage || "/api/placeholder/800/600"}
-                  alt={currentDisaster.title || "Disaster"}
+                  src={currentDisaster.coverImage}
+                  alt={currentDisaster.title}
                   fill
                   className="object-cover"
                 />
@@ -629,20 +661,10 @@ useEffect(() => {
 
                 <button
                   className="absolute top-4 right-4 bg-black bg-opacity-50 rounded-full p-2"
-                  onClick={closeModal}
+                  onClick={() => setIsModalOpen(false)}
                 >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
 
@@ -650,17 +672,15 @@ useEffect(() => {
                   <div className="flex items-center mb-2">
                     <div className="w-12 h-12 rounded-xl overflow-hidden mr-3 bg-gray-700">
                       <Image
-                        src={currentDisaster.logo || "/api/placeholder/48/48"}
-                        alt={currentDisaster.organization || "Organization"}
+                        src={currentDisaster.logo}
+                        alt={currentDisaster.organization}
                         width={48}
                         height={48}
                       />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold">{currentDisaster.name}</h3>
-                      <p className="text-gray-300">
-                        {currentDisaster?.ngoId?.name} • {currentDisaster?.ngoId?.district}
-                      </p>
+                      <h3 className="text-2xl font-bold">{currentDisaster.title}</h3>
+                      <p className="text-gray-300">{currentDisaster.organization} • {currentDisaster.location}</p>
                     </div>
                   </div>
                 </div>
@@ -671,25 +691,9 @@ useEffect(() => {
                 {/* Severity and timeline */}
                 <div className="flex justify-between items-center mb-6">
                   <div className="flex items-center">
-                    <div
-                      className={`w-4 h-4 rounded-full mr-2 ${
-                        currentDisaster.situationRating >= 9
-                          ? "bg-red-500 animate-pulse"
-                          : currentDisaster.situationRating >= 7
-                          ? "bg-orange-500"
-                          : "bg-yellow-500"
-                      }`}
-                    ></div>
-                    <span
-                      className={`font-medium ${getSeverityColor(
-                        currentDisaster.situationRating
-                      )}`}
-                    >
-                      {getSeverityLabel(currentDisaster.situationRating)} Situation (
-                      {currentDisaster.situationRating
-                        ? currentDisaster.situationRating.toFixed(1)
-                        : "N/A"}
-                      /10)
+                    <div className={`w-4 h-4 rounded-full mr-2 ${currentDisaster.severity >= 9 ? 'bg-red-500 animate-pulse' : currentDisaster.severity >= 7 ? 'bg-orange-500' : 'bg-yellow-500'}`}></div>
+                    <span className={`font-medium ${getSeverityColor(currentDisaster.severity)}`}>
+                      {getSeverityLabel(currentDisaster.severity)} Situation ({currentDisaster.severity.toFixed(1)}/10)
                     </span>
                   </div>
                   <span className="text-gray-400">{currentDisaster.timeline}</span>
@@ -702,142 +706,121 @@ useEffect(() => {
                 </div>
 
                 {/* Impact statistics */}
-                {currentDisaster.impactStats && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-gray-800/50 rounded-lg p-4 text-center">
-                      <p className="text-sm text-gray-400">People Affected</p>
-                      <p className="text-2xl font-bold text-red-400">
-                        {currentDisaster.impactStats.peopleAffected || "Unknown"}
-                      </p>
-                    </div>
-                    <div className="bg-gray-800/50 rounded-lg p-4 text-center">
-                      <p className="text-sm text-gray-400">Area Affected</p>
-                      <p className="text-2xl font-bold text-orange-400">
-                        {currentDisaster.impactStats.areaAffected || "Unknown"}
-                      </p>
-                    </div>
-                    <div className="bg-gray-800/50 rounded-lg p-4 text-center">
-                      <p className="text-sm text-gray-400">Critical Needs</p>
-                      <div className="flex flex-wrap justify-center gap-2 mt-2">
-                        {currentDisaster.impactStats.criticalNeeds?.map((need, i) => (
-                          <span key={i} className="bg-gray-600 px-2 py-1 rounded text-sm">
-                            {need}
-                          </span>
-                        )) || <span className="text-gray-400">Data unavailable</span>}
-                      </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-black rounded-lg p-4 text-center">
+                    <p className="text-sm text-gray-400">People Affected</p>
+                    <p className="text-2xl font-bold text-red-400">{currentDisaster.impactStats.peopleAffected}</p>
+                  </div>
+                  <div className="bg-black rounded-lg p-4 text-center">
+                    <p className="text-sm text-gray-400">Area Affected</p>
+                    <p className="text-2xl font-bold text-orange-400">{currentDisaster.impactStats.areaAffected}</p>
+                  </div>
+                  <div className="bg-black rounded-lg p-4 text-center">
+                    <p className="text-sm text-gray-400">Critical Needs</p>
+                    <div className="flex justify-center space-x-2 mt-2">
+                      {currentDisaster.impactStats.criticalNeeds.map((need, i) => (
+                        <span key={i} className="bg-gray-600 px-2 py-1 rounded text-sm">{need}</span>
+                      ))}
                     </div>
                   </div>
-                )}
+                </div>
 
                 {/* Progress bar */}
                 <div className="mb-6">
                   <div className="flex justify-between items-center mb-2">
                     <h4 className="font-semibold">Fundraising Progress</h4>
-                    <span className="text-gray-400">
-                      {getProgressPercentage(
-                        currentDisaster.ngoId.totalDonationReceived || 0,
-                        currentDisaster.fundsRequired || 1
-                      )}
-                      % of goal
-                    </span>
+                    <span className="text-gray-400">{getProgressPercentage(currentDisaster.raised, currentDisaster.goal)}% of goal</span>
                   </div>
                   <div className="w-full bg-gray-700 rounded-full h-4 mb-2">
                     <MotionDiv
                       className="bg-gradient-to-r from-red-600 to-orange-500 h-full rounded-full relative"
-                      style={{
-                        width: `${getProgressPercentage(
-                          currentDisaster.ngoId.totalDonationReceived || 0,
-                          currentDisaster.fundsRequired || 1
-                        )}%`,
-                      }}
+                      style={{ width: `${getProgressPercentage(currentDisaster.raised, currentDisaster.goal)}%` }}
                     >
                       <div className="absolute -right-2 -top-2 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold">
-                        {getProgressPercentage(
-                          currentDisaster.ngoId.totalDonationReceived || 0,
-                          currentDisaster.fundsRequired || 1
-                        )}
-                        %
+                        {getProgressPercentage(currentDisaster.raised, currentDisaster.goal)}%
                       </div>
                     </MotionDiv>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>₹{(currentDisaster.ngoId.totalDonationReceived || 0).toLocaleString()} raised</span>
-                    <span>
-                      ₹{(currentDisaster.fundsRequired || 0).toLocaleString()} goal
-                    </span>
+                    <span>${currentDisaster.raised.toLocaleString()} raised</span>
+                    <span>${currentDisaster.goal.toLocaleString()} goal</span>
                   </div>
                 </div>
 
                 {/* Latest updates */}
-                {currentDisaster.updates && currentDisaster.updates.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="text-xl font-semibold mb-4">Latest Updates</h4>
-                    <div className="space-y-4">
-                      {currentDisaster.updates.map((update, i) => (
-                        <div key={i} className="bg-gray-700/50 rounded-lg p-4">
-                          <p className="text-sm text-orange-300 mb-1">{update.time}</p>
-                          <p>{update.text}</p>
-                        </div>
-                      ))}
-                    </div>
+                <div className="mb-6">
+                  <h4 className="text-xl font-semibold mb-4">Latest Updates</h4>
+                  <div className="space-y-4">
+                    {currentDisaster.updates.map((update, i) => (
+                      <div key={i} className="bg-gray-700/50 rounded-lg p-4">
+                        <p className="text-sm text-orange-300 mb-1">{update.time}</p>
+                        <p>{update.text}</p>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+
                 {/* Donation options */}
-  {/* Donation options */}
-<div className="mb-6">
-  <h4 className="text-xl font-semibold mb-4">Make a Donation</h4>
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-    {[25, 50, 100].map((amount) => (
-      <MotionDiv
-        key={amount}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => handleDonate(selectedNgoId, amount)}
-        className={`cursor-pointer ${
-          amount === 100 ? "bg-red-600 hover:bg-red-700" : "bg-gray-700 hover:bg-gray-600"
-        } rounded-lg p-3 text-center`}
-      >
-        <div className="text-lg font-bold">${amount}</div>
-        <div className="text-sm text-gray-400">{amount === 100 ? "Popular" : "One-time"}</div>
-      </MotionDiv>
-    ))}
+                <div className="mb-6">
+                  <h4 className="text-xl font-semibold mb-4">Make a Donation</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                    <MotionDiv
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 text-center"
+                    >
+                      <div className="text-lg font-bold">$25</div>
+                      <div className="text-sm text-gray-400">One-time</div>
+                    </MotionDiv>
+                    <MotionDiv
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 text-center"
+                    >
+                      <div className="text-lg font-bold">$50</div>
+                      <div className="text-sm text-gray-400">One-time</div>
+                    </MotionDiv>
+                    <MotionDiv
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-red-600 hover:bg-red-700 rounded-lg p-3 text-center"
+                    >
+                      <div className="text-lg font-bold">$100</div>
+                      <div className="text-sm">Popular</div>
+                    </MotionDiv>
+                    <MotionDiv
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 text-center"
+                    >
+                      <div className="text-lg font-bold">Custom</div>
+                      <div className="text-sm text-gray-400">Any amount</div>
+                    </MotionDiv>
+                  </div>
 
-    {/* Custom amount (could be made interactive later) */}
-    <MotionDiv
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 text-center"
-    >
-      <div className="text-lg font-bold">Custom</div>
-      <div className="text-sm text-gray-400">Any amount</div>
-    </MotionDiv>
-  </div>
-
-  {/* Main donate and interaction buttons */}
-  <div className="flex gap-4 mb-4">
-    <MotionDiv
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={() => handleDonate(selectedNgoId, donationAmount)}
-      className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-lg flex items-center justify-center cursor-pointer"
-    >
-      Donate ₹{donationAmount}
-    </MotionDiv>
-    <MotionDiv
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="bg-gray-700 hover:bg-gray-600 py-3 px-4 rounded-lg flex items-center justify-center cursor-pointer"
-    >
-      <Heart className="h-5 w-5" />
-    </MotionDiv>
-    <MotionDiv
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="bg-gray-700 hover:bg-gray-600 py-3 px-4 rounded-lg flex items-center justify-center cursor-pointer"
-    >
-      <Share2 className="h-5 w-5" />
-    </MotionDiv>
-  </div>
+                  <div className="flex gap-4 mb-4">
+                    <MotionDiv
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-lg flex items-center justify-center"
+                    >
+                      Donate Now
+                    </MotionDiv>
+                    <MotionDiv
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-gray-700 hover:bg-gray-600 py-3 px-4 rounded-lg flex items-center justify-center"
+                    >
+                      <Heart className="h-5 w-5" />
+                    </MotionDiv>
+                    <MotionDiv
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-gray-700 hover:bg-gray-600 py-3 px-4 rounded-lg flex items-center justify-center"
+                    >
+                      <Share2 className="h-5 w-5" />
+                    </MotionDiv>
+                  </div>
 
                   <div className="bg-gray-700/30 rounded-lg p-4 text-sm">
                     <p className="mb-2">Your donation is tax-deductible. You'll receive a receipt via email.</p>
@@ -880,7 +863,7 @@ useEffect(() => {
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <h4 className="text-xl font-semibold">Community Discussion</h4>
-                    <span className="text-sm text-gray-400">{currentDisaster?.engagement?.donations} participants</span>
+                    <span className="text-sm text-gray-400">{currentDisaster.engagement.donations} participants</span>
                   </div>
 
                   <div className="bg-gray-700/30 rounded-lg mb-4">
