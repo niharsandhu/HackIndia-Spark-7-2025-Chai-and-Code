@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { AlertTriangle, Heart, MessageCircle, Share2, Users, Flame, TrendingUp, ArrowRight, Info, Activity, Globe, Eye, ExternalLink, ChevronDown, Search, Bell, Menu, X } from "lucide-react";
-import Navbar from "@/frontend/components/navbar";
+import Navbar from "@/components/navbar";
 
 export default function DisasterReliefCommunity() {
   const [activeTab, setActiveTab] = useState("urgent");

@@ -1,7 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./db');
-const ngoRoutes = require('./routes/ngoRoutes');
+const registerRoutes= require('./routes/RegisterRoutes');
+const crisisRoutes = require('./routes/crisesRoutes');
+const donationRoutes = require('./routes/donationRoutes');
 const app = express();
 
 const PORT =  3002;
@@ -12,8 +14,9 @@ app.use(express.json());
 
 connectDB();
 
-// Routes
-app.use('/api',ngoRoutes);
+app.use('/api',registerRoutes);
+app.use('/api',crisisRoutes);
+app.use('/api',donationRoutes);
 
 // Start server
 app.listen(PORT, () => {

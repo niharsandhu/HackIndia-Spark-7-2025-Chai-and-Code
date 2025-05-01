@@ -4,48 +4,30 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with the account:", deployer.address);
 
-  // Deploy NGORegistry
-  const NGORegistry = await ethers.getContractFactory("NGORegistry");
-  const ngoRegistry = await NGORegistry.deploy();
-  
-  // Wait for the contract to be mined
-  await ngoRegistry.waitForDeployment();
-  console.log("NGORegistry deployed to:", await ngoRegistry.getAddress());
-
-  // Deploy AidTracker
-  const AidTracker = await ethers.getContractFactory("AidTracker");
-  const aidTracker = await AidTracker.deploy();
-  
-  // Wait for the contract to be mined
-  await aidTracker.waitForDeployment();
-  console.log("AidTracker deployed to:", await aidTracker.getAddress());
-
-  // Deploy DonationVault with references to the other contracts
+  // Deploy DonationVault
   const DonationVault = await ethers.getContractFactory("DonationVault");
-  const donationVault = await DonationVault.deploy(
-    await ngoRegistry.getAddress(), 
-    await aidTracker.getAddress()
-  );
-  
-  // Wait for the contract to be mined
+  const donationVault = await DonationVault.deploy();
+
+  // Wait for the contract to be deployed
   await donationVault.waitForDeployment();
-  console.log("DonationVault deployed to:", await donationVault.getAddress());
+  const contractAddress = await donationVault.getAddress();
+  console.log("DonationVault deployed to:", contractAddress);
 
-  // Optional: Transfer ownership of AidTracker and NGORegistry to DonationVault
-  /*
-  await ngoRegistry.transferOwnership(await donationVault.getAddress());
-  console.log("NGORegistry ownership transferred to DonationVault");
-  
-  await aidTracker.transferOwnership(await donationVault.getAddress());
-  console.log("AidTracker ownership transferred to DonationVault");
-  */
+  // Fund the deployed contract with 10 ETH (Ethers v6 syntax)
+  const tx = await deployer.sendTransaction({
+    to: contractAddress,
+    value: ethers.parseEther("10") // updated for v6
+  });
 
-  console.log("Deployment complete!");
+  await tx.wait();
+  console.log(`Funded contract at ${contractAddress} with 10 ETH`);
+
+  console.log("Deployment and funding complete!");
 }
 
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error("Error during deployment:", error);
+    console.error("Error during deployment or funding:", error);
     process.exit(1);
   });
