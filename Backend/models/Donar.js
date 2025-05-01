@@ -6,10 +6,6 @@ const donorSchema = new mongoose.Schema({
   email: { type: String, required: true },
   phoneNo: { type: String, required: true },
   blockchainWalletAddress: { type: String, required: true, unique: true },
-  nonce: {
-    type: String,
-    default: uuidv4
-  }
 });
 
 module.exports = mongoose.model('Donor', donorSchema);

@@ -12,6 +12,17 @@ async function main() {
   await donationVault.waitForDeployment();
   const contractAddress = await donationVault.getAddress();
   console.log("DonationVault deployed to:", contractAddress);
+
+  // Optionally send ETH to fund the contract
+  const tx = await deployer.sendTransaction({
+    to: contractAddress,
+    value: ethers.parseEther("10"), // 10 ETH to fund the contract
+    gasLimit: 5000000, // Adjust gas limit if needed
+    gasPrice: ethers.parseUnits("20", "gwei"), // Adjust gas price if needed
+  });
+
+  await tx.wait();
+  console.log(`Funded contract at ${contractAddress} with 10 ETH`);
 }
 
 main()

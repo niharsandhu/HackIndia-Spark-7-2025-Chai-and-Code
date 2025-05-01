@@ -3,10 +3,11 @@ const cors = require('cors');
 const connectDB = require('./db');
 
 const crisisRoutes = require('./routes/crisesRoutes');
-const donationRoutes = require('./routes/donationRoutes');
 const aidRoutes = require('./routes/aiddist');
 const aidDistRoutes = require('./routes/aidRoutes');
-const authRoutes = require('./routes/authRoutes');
+const RegisterRoutes = require('./routes/RegisterRoutes');
+const donateRoutes = require('./routes/donationRoute');
+const loginRoutes = require('./routes/loginRoute');
 const app = express();
 
 const PORT =  3002;
@@ -27,10 +28,11 @@ connectDB();
 
 
 app.use('/api', crisisRoutes);
-app.use('/api', donationRoutes);
 app.use('/api', aidRoutes);
 app.use('/api', aidDistRoutes);
-app.use('/api', authRoutes);
+app.use('/api', RegisterRoutes);
+app.use('/api', donateRoutes);
+app.use('/api', loginRoutes);
 
 // Start server
 app.listen(PORT, () => {

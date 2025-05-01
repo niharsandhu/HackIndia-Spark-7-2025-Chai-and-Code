@@ -5,7 +5,11 @@ require("dotenv").config();
 module.exports = {
   solidity: "0.8.28",
   networks: {
-    // For Sepolia testnet deployment
+    // Local development network (Hardhat node)
+    localhost: {
+      url: "http://127.0.0.1:8545", // Local network URL
+    },
+    // For testnet deployment (add your API key and private key)
     sepolia: {
       url: process.env.SEPOLIA_URL || "",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []

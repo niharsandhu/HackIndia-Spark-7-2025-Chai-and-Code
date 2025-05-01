@@ -2,15 +2,27 @@ const mongoose = require('mongoose');
 
 const crisisSchema = new mongoose.Schema(
   {
-    name:{
-        type: String,
-        required: true,
-        trim: true
-        },
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
     place: {
       type: String,
       required: true,
       trim: true
+    },
+    latitude: {
+      type: Number,
+      required: true,
+      min: -90,
+      max: 90
+    },
+    longitude: {
+      type: Number,
+      required: true,
+      min: -180,
+      max: 180
     },
     ngoId: {
       type: mongoose.Schema.Types.ObjectId,
