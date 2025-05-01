@@ -12,17 +12,6 @@ async function main() {
   await donationVault.waitForDeployment();
   const contractAddress = await donationVault.getAddress();
   console.log("DonationVault deployed to:", contractAddress);
-
-  // Fund the deployed contract with 10 ETH (Ethers v6 syntax)
-  const tx = await deployer.sendTransaction({
-    to: contractAddress,
-    value: ethers.parseEther("10") // updated for v6
-  });
-
-  await tx.wait();
-  console.log(`Funded contract at ${contractAddress} with 10 ETH`);
-
-  console.log("Deployment and funding complete!");
 }
 
 main()

@@ -51,6 +51,7 @@ const Donate = () => {
     }
   
     try {
+      // Send donation data to backend
       const response = await axios.post(`http://localhost:3002/api/sendFundsToNGO/${selectedNgo}`, {
         donorWallet: walletAddress,
         amount: parseFloat(amount), // Ensure amount is a number
@@ -64,7 +65,6 @@ const Donate = () => {
       setMessage('Error while processing donation');
     }
   };
-  
   
   return (
     <div>

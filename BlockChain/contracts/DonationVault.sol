@@ -43,7 +43,7 @@ contract DonationVault is Ownable, ReentrancyGuard {
         _recordDonation(msg.sender, msg.value, keccak256(abi.encodePacked(msg.sender, msg.value, block.timestamp)));
     }
 
-    // Explicit donation function
+    // Explicit donation function for external donors
     function donateFor(address donor) external payable {
         _recordDonation(donor, msg.value, keccak256(abi.encodePacked(donor, msg.value, block.timestamp)));
     }
@@ -63,25 +63,27 @@ contract DonationVault is Ownable, ReentrancyGuard {
     }
 
     // Send funds to an NGO in need
-    function fundNGO(uint256 _ngoId, uint256 _amount, address _ngoWallet) external onlyOwner nonReentrant {
-        require(_amount <= address(this).balance, "Insufficient balance");
+    function donateToNGO(uint256 ngoId, address ngoWallet) external payable nonReentrant {
+        require(msg.value > 0, "Donation must be greater than zero");
+        require(ngoWallet != address(0), "Invalid NGO wallet");
 
-        uint256 fundingId = fundings.length;
+        uint256 donationId = donations.length;
 
-        fundings.push(NGOFunding({
-            ngoId: _ngoId,
-            amount: _amount,
+        donations.push(Donation({
+            donor: msg.sender,
+            amount: msg.value,
             timestamp: block.timestamp,
-            returned: 0
+            transactionHash: keccak256(abi.encodePacked(msg.sender, msg.value, block.timestamp))
         }));
 
-        totalDistributed += _amount;
+        totalDonated += msg.value;
 
-        // Transfer funds to NGO
-        (bool sent, ) = payable(_ngoWallet).call{value: _amount}("");
-        require(sent, "Failed to send funds to NGO");
+        // Send the ETH directly to the NGO
+        (bool sent, ) = payable(ngoWallet).call{value: msg.value}("");
+        require(sent, "Transfer to NGO failed");
 
-        emit FundsSentToNGO(_ngoId, _ngoWallet, _amount, fundingId);
+        emit DonationReceived(msg.sender, msg.value, donationId, keccak256(abi.encodePacked(msg.sender, msg.value, block.timestamp)));
+        emit FundsSentToNGO(ngoId, ngoWallet, msg.value, donationId);
     }
 
     // Record returned funds from NGO
@@ -97,4 +99,10 @@ contract DonationVault is Ownable, ReentrancyGuard {
 
         emit FundsReturnedFromNGO(funding.ngoId, _amount, _fundingId);
     }
+
+    // Add a function to register an NGO wallet if needed
+    function registerNGO(uint256 ngoId, address ngoWallet) external onlyOwner {
+        // Store NGO information or check conditions for registration
+    }
+
 }
