@@ -3,10 +3,12 @@ const NGO = require('../models/Ngo');
 
 exports.buyAid = async (req, res) => {
   try {
-    const { aidType, quantityPurchased, totalCost, ngoId } = req.body;
+    const { aidType, quantityPurchased, unitCost, ngoId } = req.body;
 
     const ngo = await NGO.findById(ngoId);
     if (!ngo) return res.status(404).json({ message: 'NGO not found' });
+
+    const totalCost = quantityPurchased * unitCost;
 
     if (ngo.totalDonationReceived < totalCost) {
       return res.status(400).json({ message: 'Insufficient funds' });

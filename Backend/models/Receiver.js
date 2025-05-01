@@ -27,6 +27,9 @@ const aidReceiverSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Crisis',
       required: true
+    },
+    qrCode: {
+      type: String // stores base64 image string or URL
     }
   },
   {

@@ -1,6 +1,7 @@
 const NGO = require('../models/Ngo');
 const Donor = require('../models/Donar');
 const AidReceiver = require('../models/Receiver');
+const QRCode = require('qrcode');
 const bcrypt = require('bcrypt');
 
 // Register NGO
@@ -64,13 +65,11 @@ const registerAidReceiver = async (req, res) => {
     try {
       const { email, password, noOfFamilyMembers, familyLeaderName, crisisId } = req.body;
   
-      // Check if Aid Receiver already exists
       const existingReceiver = await AidReceiver.findOne({ email });
       if (existingReceiver) {
         return res.status(400).json({ message: 'Aid Receiver with this email already exists.' });
       }
   
-      // Hash the password before saving
       const hashedPassword = await bcrypt.hash(password, 10);
   
       const newAidReceiver = new AidReceiver({
@@ -78,11 +77,29 @@ const registerAidReceiver = async (req, res) => {
         password: hashedPassword,
         noOfFamilyMembers,
         familyLeaderName,
-        crisisId  // Include the crisisId here
+        crisisId
       });
   
       await newAidReceiver.save();
-      return res.status(201).json({ message: 'Aid Receiver registered successfully.', aidReceiver: newAidReceiver });
+  
+      // Generate a QR Code that encodes the aid receiver's ID
+      const qrData = `${newAidReceiver._id}`; // or any custom info
+      const qrCodeImage = await QRCode.toDataURL(qrData);
+  
+      // Save the QR code in the database
+      newAidReceiver.qrCode = qrCodeImage;
+      await newAidReceiver.save();
+  
+      return res.status(201).json({
+        message: 'Aid Receiver registered successfully.',
+        aidReceiver: {
+          _id: newAidReceiver._id,
+          email: newAidReceiver.email,
+          familyLeaderName: newAidReceiver.familyLeaderName,
+          noOfFamilyMembers: newAidReceiver.noOfFamilyMembers,
+          qrCode: newAidReceiver.qrCode
+        }
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: 'Server error during Aid Receiver registration.' });
