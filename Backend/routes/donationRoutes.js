@@ -4,5 +4,6 @@ const donationController = require('../controllers/donation ');
 
 // POST route for creating a new crisis
 router.post('/donate',donationController.sendFundsToNGO);
+router.get('/ngos', donationController.getAllNgos);
 
 module.exports = router;
