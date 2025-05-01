@@ -1,34 +1,15 @@
 const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const donorSchema = new mongoose.Schema(
-  {
-    blockchainWalletAddress: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true
-    },
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    phone: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true
-    }
-  },
-  {
-    timestamps: true
+const donorSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  phoneNo: { type: String, required: true },
+  blockchainWalletAddress: { type: String, required: true, unique: true },
+  nonce: {
+    type: String,
+    default: uuidv4
   }
-);
+});
 
 module.exports = mongoose.model('Donor', donorSchema);

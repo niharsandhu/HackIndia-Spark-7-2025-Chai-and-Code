@@ -1,64 +1,22 @@
 const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const ngoSchema = new mongoose.Schema(
-  {
-    darbanId: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true
-    },
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    state: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    district: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true
-    },
-    phoneNo: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    type: {
-      type: String,
-      enum: ['Health', 'Education', 'Environment', 'Animal Welfare', 'Others'],
-      required: true
-    },
-    status: {
-      isVerified: {
-        type: Boolean,
-        default: false
-      }
-    },
-    totalDonationReceived: {
-      type: Number,
-      default: 0
-    },
-    blockchainWalletAddress: {
-      type: String,
-      required: true,
-      trim: true
-    }
+const ngoSchema = new mongoose.Schema({
+  darbanId: { type: String, required: true },
+  name: { type: String, required: true },
+  state: { type: String, required: true },
+  district: { type: String, required: true },
+  email: { type: String, required: true },
+  phoneNo: { type: String, required: true },
+  type: { type: String, required: true },
+  blockchainWalletAddress: { type: String, required: true, unique: true },
+  status: {
+    isVerified: { type: Boolean, default: false }
   },
-  {
-    timestamps: true
+  nonce: {
+    type: String,
+    default: uuidv4
   }
-);
+});
 
 module.exports = mongoose.model('NGO', ngoSchema);
