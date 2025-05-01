@@ -1,4 +1,4 @@
-require("@nomicfoundation/hardhat-toolbox");
+require("@nomicfoundation/hardhat-ethers");
 require("dotenv").config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
@@ -8,7 +8,6 @@ module.exports = {
     // Local development network (Hardhat node)
     localhost: {
       url: "http://127.0.0.1:8545", // Local network URL
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [], // Private key for local account
     },
     // For testnet deployment (add your API key and private key)
     sepolia: {

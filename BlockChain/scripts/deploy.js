@@ -7,28 +7,36 @@ async function main() {
   // Deploy NGORegistry
   const NGORegistry = await ethers.getContractFactory("NGORegistry");
   const ngoRegistry = await NGORegistry.deploy();
-  await ngoRegistry.deployTransaction.wait();
-  console.log("NGORegistry deployed to:", ngoRegistry.address);
+  
+  // Wait for the contract to be mined
+  await ngoRegistry.waitForDeployment();
+  console.log("NGORegistry deployed to:", await ngoRegistry.getAddress());
 
   // Deploy AidTracker
   const AidTracker = await ethers.getContractFactory("AidTracker");
   const aidTracker = await AidTracker.deploy();
-  await aidTracker.deployTransaction.wait();
-  console.log("AidTracker deployed to:", aidTracker.address);
+  
+  // Wait for the contract to be mined
+  await aidTracker.waitForDeployment();
+  console.log("AidTracker deployed to:", await aidTracker.getAddress());
 
   // Deploy DonationVault with references to the other contracts
   const DonationVault = await ethers.getContractFactory("DonationVault");
-  const donationVault = await DonationVault.deploy(ngoRegistry.address, aidTracker.address);
-  await donationVault.deployTransaction.wait();
-  console.log("DonationVault deployed to:", donationVault.address);
+  const donationVault = await DonationVault.deploy(
+    await ngoRegistry.getAddress(), 
+    await aidTracker.getAddress()
+  );
+  
+  // Wait for the contract to be mined
+  await donationVault.waitForDeployment();
+  console.log("DonationVault deployed to:", await donationVault.getAddress());
 
   // Optional: Transfer ownership of AidTracker and NGORegistry to DonationVault
-  // Uncomment if you want centralized control through DonationVault
   /*
-  await ngoRegistry.transferOwnership(donationVault.address);
+  await ngoRegistry.transferOwnership(await donationVault.getAddress());
   console.log("NGORegistry ownership transferred to DonationVault");
   
-  await aidTracker.transferOwnership(donationVault.address);
+  await aidTracker.transferOwnership(await donationVault.getAddress());
   console.log("AidTracker ownership transferred to DonationVault");
   */
 
@@ -38,6 +46,6 @@ async function main() {
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error(error);
+    console.error("Error during deployment:", error);
     process.exit(1);
   });

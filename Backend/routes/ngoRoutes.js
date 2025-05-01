@@ -16,7 +16,7 @@ router.post('/ngos', ngoController.registerNGO);
 router.put('/ngos/:ngoId/status', ngoController.updateNGOStatus);
 router.get('/ngos/in-need', ngoController.getNGOsInNeed);
 router.get('/ngos/:ngoId', ngoController.getNGOById);
-
+router.get('/ngos', ngoController.getAllNGOs);
 
 // Aid routes
 router.post('/aid-cards', aidController.createAidCard);
@@ -26,7 +26,6 @@ router.get('/aid-distribution/:beneficiaryId', aidController.getAidDistribution)
 // Donation routes
 router.post('/donations', donationController.processDonation);
 router.post('/fundings', donationController.fundNGO);
-router.post('/fundings/return', donationController.recordReturnedFunds);
 router.get('/donation-stats', donationController.getDonationStats);
 router.get('/donations', donationController.getDonationHistory);
 router.get('/fundings', donationController.getFundingHistory);

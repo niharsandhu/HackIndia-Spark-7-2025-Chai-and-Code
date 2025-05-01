@@ -16,6 +16,8 @@
     "hardhat": "^2.23.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.9.3"
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "@openzeppelin/contracts": "^4.9.3",
+    "ethers": "^6.13.7"
   }
 }

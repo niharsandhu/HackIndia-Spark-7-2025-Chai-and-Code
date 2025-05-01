@@ -12,7 +12,8 @@ const donationVaultSchema = new mongoose.Schema({
   totalReturned: {
     type: Number,
     default: 0,
-  },
+  }
+,  
   donations: [
     {
       donorId: {

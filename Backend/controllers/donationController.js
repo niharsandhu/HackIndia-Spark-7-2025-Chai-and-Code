@@ -1,4 +1,4 @@
-const { ethers } = require('ethers');
+const { isAddress, parseEther } = require('ethers');
 const User = require('../models/user');
 const Ngo = require('../models/Ngo');
 const DonationVault = require('../models/vault');
@@ -12,6 +12,7 @@ const AidTrackerABI = require('../../BlockChain/artifacts/contracts/AidTracker.s
 const DonationVaultABI = require('../../BlockChain/artifacts/contracts/DonationVault.sol/DonationVault.json').abi;
 
 // Configure blockchain connection
+const { ethers } = require('ethers');
 const provider = new ethers.JsonRpcProvider('http://localhost:8545'); // Default Hardhat local network
 const privateKey = process.env.PRIVATE_KEY;
 const signer = new ethers.Wallet(privateKey, provider);
@@ -27,126 +28,122 @@ const aidTracker = new ethers.Contract(AID_TRACKER_ADDRESS, AidTrackerABI, signe
 const donationVault = new ethers.Contract(DONATION_VAULT_ADDRESS, DonationVaultABI, signer);
 
 
-/**
- * Helper function to sync blockchain data with MongoDB
- */
+
 async function syncDonationStats() {
-  try {
-    const stats = await donationVault.getStats();
-    
-    // Find or create the donation vault document
-    let vault = await DonationVault.findOne();
-    if (!vault) {
-      vault = new DonationVault();
+    try {
+        const stats = await donationVault.getStats();
+
+        // Check if stats are valid
+        if (!stats || stats.length !== 4) {
+            console.error("Invalid stats data received:", stats);
+            return;
+        }
+
+        // Find or create the donation vault document
+        let vault = await DonationVault.findOne();
+        if (!vault) {
+            vault = new DonationVault();
+        }
+
+        // Update with latest blockchain data
+        vault.totalReceived = ethers.formatEther(stats[0]); // balance
+        vault.totalDistributed = ethers.formatEther(stats[2]); // distributed
+        vault.totalReturned = ethers.formatEther(stats[3]); // returned
+
+        await vault.save();
+
+        return vault;
+    } catch (error) {
+        console.error('Error syncing donation stats:', error);
+        throw error;
     }
-    
-    // Update with latest blockchain data
-    vault.totalReceived = ethers.formatEther(stats.donated);
-    vault.totalDistributed = ethers.formatEther(stats.distributed);
-    vault.totalReturned = ethers.formatEther(stats.returned);
-    
-    await vault.save();
-    
-    return vault;
-  } catch (error) {
-    console.error('Error syncing donation stats:', error);
-    throw error;
-  }
 }
+
 
 /**
  * NGO Management Controllers
  */
 const ngoController = {
-  /**
-   * Register a new NGO both on blockchain and MongoDB
-   */
-  registerNGO: async (req, res) => {
-    try {
-        
-      const { name, walletAddress, darpanId, metadata } = req.body;
+
+    registerNGO: async (req, res) => {
+        try {
+          const { name, walletAddress, darpanId, metadata, email, phone } = req.body;
       
-      // Validate inputs
-      if (!ethers.isAddress(walletAddress)) {
-        return res.status(400).json({ success: false, message: 'Invalid wallet address' });
-      }
-      
-      // Check if NGO already exists in database
-      const existingNGO = await Ngo.findOne({ 
-        $or: [{ walletAddress }, { darpanId }] 
-      });
-      
-      if (existingNGO) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'NGO with this wallet address or DARPAN ID already exists' 
-        });
-      }
-      
-      // Register NGO on blockchain
-      const tx = await ngoRegistry.registerNGO(walletAddress, name, metadata);
-      const receipt = await tx.wait();
-      
-      // Find NGO ID from blockchain event
-      const event = receipt.logs
-        .map(log => {
-          try {
-            return ngoRegistry.interface.parseLog(log);
-          } catch (e) {
-            return null;
+          if (!ethers.isAddress(walletAddress)) {
+            return res.status(400).json({ success: false, message: 'Invalid wallet address' });
           }
-        })
-        .find(event => event && event.name === 'NGORegistered');
       
-      const ngoId = event ? event.args.ngoId.toString() : '0';
+          const existingNGO = await Ngo.findOne({
+            $or: [{ walletAddress }, { darpanId }]
+          });
       
-      // Create NGO in MongoDB
-      const newNGO = new Ngo({
-        name,
-        walletAddress,
-        darpanId,
-        metadata,
-        isApproved: true, // Default to approved as per contract
-        needsFunding: false,
-      });
+          if (existingNGO) {
+            return res.status(400).json({
+              success: false,
+              message: 'NGO with this wallet address or DARPAN ID already exists'
+            });
+          }
       
-      await newNGO.save();
+          const tx = await ngoRegistry.registerNGO(walletAddress, name, metadata);
+          const receipt = await tx.wait();
       
-      // Create a user entry for the NGO
-      const ngoUser = new User({
-        role: 'ngo',
-        name,
-        email: req.body.email,
-        phone: req.body.phone,
-        walletAddress,
-        darpanId,
-        verified: true,
-      });
+          const event = receipt.logs
+            .map(log => {
+              try {
+                return ngoRegistry.interface.parseLog(log);
+              } catch (e) {
+                return null;
+              }
+            })
+            .find(event => event && event.name === 'NGORegistered');
       
-      await ngoUser.save();
+          const blockchainId = event ? parseInt(event.args.ngoId.toString()) : 0;
       
-      res.status(201).json({
-        success: true,
-        message: 'NGO registered successfully',
-        data: {
-          _id: newNGO._id,
-          blockchainId: ngoId,
-          transactionHash: receipt.hash
+          const newNGO = new Ngo({
+            name,
+            walletAddress,
+            darpanId,
+            metadata,
+            isApproved: true,
+            needsFunding: false,
+            blockchainId // ✅ include this in schema
+          });
+      
+          await newNGO.save();
+      
+          const ngoUser = new User({
+            role: 'ngo',
+            name,
+            email,
+            phone,
+            walletAddress,
+            darpanId,
+            verified: true,
+            ngoId: newNGO._id // ✅ link to NGO
+          });
+      
+          await ngoUser.save();
+      
+          res.status(201).json({
+            success: true,
+            message: 'NGO registered successfully',
+            data: {
+              _id: newNGO._id,
+              blockchainId,
+              transactionHash: receipt.hash
+            }
+          });
+      
+        } catch (error) {
+          console.error('Error registering NGO:', error);
+          res.status(500).json({
+            success: false,
+            message: 'Error registering NGO',
+            error: error.message
+          });
         }
-      });
-    } catch (error) {
-      console.error('Error registering NGO:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error registering NGO', 
-        error: error.message 
-      });
-    }
-  },
-  
-  /**
-   * Update NGO funding status both on blockchain and MongoDB
-   */
+      }
+,  
   updateNGOStatus: async (req, res) => {
     try {
       const { ngoId } = req.params;
@@ -157,14 +154,13 @@ const ngoController = {
       if (!ngo) {
         return res.status(404).json({ success: false, message: 'NGO not found' });
       }
-      
-      // Get blockchain ID (this would need to be stored or mapped somewhere)
-      const blockchainId = req.body.blockchainId || 0; // You'll need a way to track this
+  
+      const blockchainId = ngo.blockchainId; // ✅ safer and correct
       
       // Update status on blockchain
       const tx = await ngoRegistry.updateNGOStatus(blockchainId, isApproved, needsFunding);
       const receipt = await tx.wait();
-      
+  
       // Update MongoDB
       ngo.isApproved = isApproved;
       ngo.needsFunding = needsFunding;
@@ -192,9 +188,6 @@ const ngoController = {
     }
   },
   
-  /**
-   * Get all NGOs needing funding
-   */
   getNGOsInNeed: async (req, res) => {
     try {
       // Get NGOs needing funding from blockchain
@@ -224,9 +217,6 @@ const ngoController = {
     }
   },
   
-  /**
-   * Get a single NGO by ID
-   */
   getNGOById: async (req, res) => {
     try {
       const { ngoId } = req.params;
@@ -250,9 +240,6 @@ const ngoController = {
     }
   },
   
-  /**
-   * Get all NGOs
-   */
   getAllNGOs: async (req, res) => {
     try {
       const ngos = await Ngo.find();
@@ -272,9 +259,6 @@ const ngoController = {
   }
 };
 
-/**
- * Aid Tracking Controllers
- */
 const aidController = {
   /**
    * Create a new aid card for a beneficiary
@@ -309,9 +293,6 @@ const aidController = {
     }
   },
   
-  /**
-   * Record aid distribution to a beneficiary
-   */
   recordAidDistribution: async (req, res) => {
     try {
       const { beneficiaryId, ngoId, amount, details, aidType, quantity } = req.body;
@@ -363,9 +344,6 @@ const aidController = {
     }
   },
   
-  /**
-   * Get aid distribution history for a beneficiary
-   */
   getAidDistribution: async (req, res) => {
     try {
       const { beneficiaryId } = req.params;
@@ -410,125 +388,144 @@ const aidController = {
   }
 };
 
-/**
- * Donation Vault Controllers
- */
 const donationController = {
-  /**
-   * Process a new donation
-   */
-  processDonation: async (req, res) => {
-    try {
-      const { userId, amount, transactionHash } = req.body;
-      
-      // Validate inputs
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ success: false, message: 'Invalid donation amount' });
-      }
-      
-      // Find donor in MongoDB
-      const donor = await User.findById(userId);
-      if (!donor) {
-        return res.status(404).json({ success: false, message: 'Donor not found' });
-      }
-      
-      // Get/create donation vault document
-      let vault = await DonationVault.findOne();
-      if (!vault) {
-        vault = new DonationVault();
-      }
-      
-      // Add donation to vault
-      vault.donations.push({
-        donorId: donor._id,
-        amount,
-        transactionHash,
-        date: new Date()
-      });
-      
-      vault.totalReceived += amount;
-      await vault.save();
-      
-      // Update donor's donation history
-      donor.totalDonations += amount;
-      donor.donationHistory.push(vault.donations[vault.donations.length - 1]._id);
-      await donor.save();
-      
-      // Sync with blockchain data
-      await syncDonationStats();
-      
-      res.status(201).json({
-        success: true,
-        message: 'Donation processed successfully',
-        data: {
-          donation: vault.donations[vault.donations.length - 1],
-          totalDonated: donor.totalDonations
+processDonation : async (req, res) => {
+        try {
+            const { userId, amount, transactionHash } = req.body;
+    
+            // Validate inputs
+            if (!amount || amount <= 0) {
+                return res.status(400).json({ success: false, message: 'Invalid donation amount' });
+            }
+    
+            // Find donor in MongoDB
+            const donor = await User.findById(userId);
+            if (!donor) {
+                return res.status(404).json({ success: false, message: 'Donor not found' });
+            }
+    
+            // Get/create donation vault document
+            let vault = await DonationVault.findOne();
+            if (!vault) {
+                vault = new DonationVault();
+            }
+    
+            // Add donation to vault
+            vault.donations.push({
+                donorId: donor._id,
+                amount,
+                transactionHash,
+                date: new Date()
+            });
+    
+            vault.totalReceived += amount;
+            await vault.save();
+    
+            // Update donor's donation history
+            donor.totalDonations += amount;
+            donor.donationHistory.push(vault.donations[vault.donations.length - 1]._id);
+            await donor.save();
+    
+            // Sync with blockchain data
+            await syncDonationStats();
+    
+            res.status(201).json({
+                success: true,
+                message: 'Donation processed successfully',
+                data: {
+                    donation: vault.donations[vault.donations.length - 1],
+                    totalDonated: donor.totalDonations
+                }
+            });
+        } catch (error) {
+            console.error('Error processing donation:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error processing donation',
+                error: error.message
+            });
         }
-      });
-    } catch (error) {
-      console.error('Error processing donation:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error processing donation', 
-        error: error.message 
-      });
-    }
-  },
-  
-  /**
-   * Fund an NGO
-   */
-  fundNGO: async (req, res) => {
+},
+   fundNGO : async (req, res) => {
     try {
-      const { ngoId, amount } = req.body;
-      
+      const { ngoId, amount, donorWallet } = req.body;
+  
       // Validate inputs
-      if (!amount || amount <= 0) {
+      if (!ngoId || !amount || !donorWallet) {
+        return res.status(400).json({ success: false, message: 'Missing required parameters' });
+      }
+  
+      if (amount <= 0) {
         return res.status(400).json({ success: false, message: 'Invalid funding amount' });
       }
-      
+  
+  
+      // Validate donor wallet address
+      if (!isAddress(donorWallet)) {
+        return res.status(400).json({ success: false, message: 'Invalid donor wallet address' });
+      }
+  
+      console.log('Donor Wallet:', donorWallet); // Log donor wallet to check if it's correctly passed
+  
       // Find NGO in MongoDB
       const ngo = await Ngo.findById(ngoId);
       if (!ngo) {
         return res.status(404).json({ success: false, message: 'NGO not found' });
       }
-      
-      // Get blockchain NGO ID (this would need to be mapped)
-      const blockchainNgoId = req.body.blockchainId || 0;
-      
+  
+      console.log('NGO:', ngo); // Log NGO data to ensure it's fetched correctly
+  
+      // Validate NGO's wallet
+      if (!ngo.walletAddress || !isAddress(ngo.walletAddress)) {
+        return res.status(400).json({ success: false, message: 'NGO has invalid wallet address' });
+      }
+  
+      // Validate NGO's blockchainId
+      if (typeof ngo.blockchainId !== 'number') {
+        return res.status(400).json({ success: false, message: 'NGO missing blockchainId' });
+      }
+  
       // Fund NGO on blockchain
-      const tx = await donationVault.fundNGO(blockchainNgoId, ethers.parseEther(amount.toString()));
+      const tx = await donationVault.donateFor(donorWallet, {
+        value: parseEther(amount.toString())
+      });
       const receipt = await tx.wait();
-      
-      // Get/create donation vault document
+  
+      // Get or create donation vault document
       let vault = await DonationVault.findOne();
       if (!vault) {
         vault = new DonationVault();
       }
-      
+  
       // Add funding to vault
       vault.fundings.push({
         ngoId: ngo._id,
         amount,
+        donorWallet,
+        ngoWallet: ngo.walletAddress,
+        transactionHash: receipt.hash,
         date: new Date()
       });
-      
+  
       vault.totalDistributed += amount;
       await vault.save();
-      
+  
       // Update NGO funding history
       ngo.totalReceived += amount;
       ngo.fundingHistory.push({
         amount,
         transactionHash: receipt.hash,
+        donorWallet,
+        ngoWallet: ngo.walletAddress,
         date: new Date()
       });
-      
+  
       await ngo.save();
-      
-      // Sync with blockchain data
-      await syncDonationStats();
-      
+  
+      // Optionally sync blockchain stats (if required)
+      // await syncDonationStats();
+  
+      // Return response
       res.status(201).json({
         success: true,
         message: 'NGO funded successfully',
@@ -540,91 +537,15 @@ const donationController = {
       });
     } catch (error) {
       console.error('Error funding NGO:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error funding NGO', 
-        error: error.message 
+      res.status(500).json({
+        success: false,
+        message: 'Error funding NGO',
+        error: error.message
       });
     }
-  },
+  }
+,  
   
-  /**
-   * Record returned funds from an NGO
-   */
-  recordReturnedFunds: async (req, res) => {
-    try {
-      const { fundingId, amount } = req.body;
-      
-      // Get/create donation vault document
-      let vault = await DonationVault.findOne();
-      if (!vault) {
-        return res.status(404).json({ success: false, message: 'Donation vault not found' });
-      }
-      
-      // Find the funding in MongoDB
-      const fundingIndex = vault.fundings.findIndex(f => f._id.toString() === fundingId);
-      if (fundingIndex === -1) {
-        return res.status(404).json({ success: false, message: 'Funding record not found' });
-      }
-      
-      const funding = vault.fundings[fundingIndex];
-      
-      // Validate amount
-      if (amount > funding.amount - (funding.returnAmount || 0)) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Return amount exceeds available funding' 
-        });
-      }
-      
-      // Get blockchain funding ID (this would need to be mapped)
-      const blockchainFundingId = req.body.blockchainFundingId || fundingIndex;
-      
-      // Record returned funds on blockchain
-      const tx = await donationVault.recordReturnedFunds(
-        blockchainFundingId, 
-        ethers.parseEther(amount.toString()),
-        { value: ethers.parseEther(amount.toString()) }
-      );
-      const receipt = await tx.wait();
-      
-      // Update MongoDB record
-      funding.returnAmount = (funding.returnAmount || 0) + amount;
-      vault.totalReturned += amount;
-      await vault.save();
-      
-      // Find and update NGO record
-      const ngo = await Ngo.findById(funding.ngoId);
-      if (ngo) {
-        // This assumes totalReceived tracks net funds (received - returned)
-        ngo.totalReceived -= amount;
-        await ngo.save();
-      }
-      
-      // Sync with blockchain data
-      await syncDonationStats();
-      
-      res.json({
-        success: true,
-        message: 'Returned funds recorded successfully',
-        data: {
-          funding: vault.fundings[fundingIndex],
-          transactionHash: receipt.hash
-        }
-      });
-    } catch (error) {
-      console.error('Error recording returned funds:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error recording returned funds', 
-        error: error.message 
-      });
-    }
-  },
-  
-  /**
-   * Get donation vault statistics
-   */
   getDonationStats: async (req, res) => {
     try {
       // Sync with blockchain first
@@ -638,7 +559,15 @@ const donationController = {
       
       // Get blockchain data
       const blockchainStats = await donationVault.getStats();
-      
+  
+      // Validate blockchain stats response
+      if (blockchainStats === "0x" || !blockchainStats) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid data from blockchain'
+        });
+      }
+  
       res.json({
         success: true,
         data: {
@@ -665,11 +594,9 @@ const donationController = {
         error: error.message 
       });
     }
-  },
+  }
+,  
   
-  /**
-   * Get donation history
-   */
   getDonationHistory: async (req, res) => {
     try {
       const vault = await DonationVault.findOne()
@@ -693,9 +620,6 @@ const donationController = {
     }
   },
   
-  /**
-   * Get funding history
-   */
   getFundingHistory: async (req, res) => {
     try {
       const vault = await DonationVault.findOne()
@@ -720,9 +644,7 @@ const donationController = {
   }
 };
 
-/**
- * User Management Controllers
- */
+
 const userController = {
   /**
    * Create a new user (donor or family)
