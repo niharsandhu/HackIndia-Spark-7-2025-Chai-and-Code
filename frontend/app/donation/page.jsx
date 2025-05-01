@@ -22,10 +22,9 @@ const Donate = () => {
         setMessage('Error fetching NGO data.');
       }
     };
-  
+
     fetchNgos();
   }, []);
-  
 
   // Connect Metamask
   const connectMetamask = async () => {
@@ -50,21 +49,23 @@ const Donate = () => {
       setMessage('Please connect wallet, enter amount and select NGO.');
       return;
     }
-
+  
     try {
-      const response = await axios.post('http://localhost:3002/api/donate', {
+      const response = await axios.post(`http://localhost:3002/api/sendFundsToNGO/${selectedNgo}`, {
         donorWallet: walletAddress,
-        amount,
+        amount: parseFloat(amount), // Ensure amount is a number
       });
-
+  
       if (response.status === 200) {
         setMessage(`Donation successful! Tx Hash: ${response.data.transactionHash}`);
       }
     } catch (error) {
+      console.error('Error while processing donation:', error);
       setMessage('Error while processing donation');
     }
   };
-
+  
+  
   return (
     <div>
       <h1>Donate to NGO</h1>
@@ -74,21 +75,20 @@ const Donate = () => {
         <p>Connected as {walletAddress}</p>
       )}
 
-<div>
-  <h3>Select NGO</h3>
-  <select
-    value={selectedNgo}
-    onChange={(e) => setSelectedNgo(e.target.value)}
-  >
-    <option value="">--Select NGO--</option>
-    {ngos.map((ngo) => (
-      <option key={ngo._id} value={ngo._id}>
-        {ngo.name}
-      </option>
-    ))}
-  </select>
-</div>
-
+      <div>
+        <h3>Select NGO</h3>
+        <select
+          value={selectedNgo}
+          onChange={(e) => setSelectedNgo(e.target.value)}
+        >
+          <option value="">--Select NGO--</option>
+          {ngos.map((ngo) => (
+            <option key={ngo._id} value={ngo._id}>
+              {ngo.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div>
         <h3>Enter Donation Amount (ETH)</h3>
