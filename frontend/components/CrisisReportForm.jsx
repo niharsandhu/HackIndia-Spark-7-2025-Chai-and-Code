@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { AlertTriangle, X, Upload, Info, MapPin, DollarSign, Clock, Users } from "lucide-react";
+import BuyAid from './buyaid'; // Import the BuyAid component
 
 export default function CrisisForm({ onClose }) {
   const [activeStep, setActiveStep] = useState(1);
@@ -19,6 +20,7 @@ export default function CrisisForm({ onClose }) {
   const [ngoId, setNgoId] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isBuyAidOpen, setIsBuyAidOpen] = useState(false);
 
   // Get NGO/user ID from localStorage
   useEffect(() => {
@@ -60,16 +62,16 @@ export default function CrisisForm({ onClose }) {
           formData.place
         )}&key=470033735d5b4e50926bd903d53ddabc`
       );
-      
+
       const { results } = geoResponse.data;
       if (!results || results.length === 0) {
         alert('Invalid place. Please try again.');
         setSubmitting(false);
         return;
       }
-      
+
       const { lat, lng } = results[0].geometry;
-      
+
       // Step 2: Create payload and send to backend
       const crisisPayload = {
         name: formData.name,
@@ -82,14 +84,14 @@ export default function CrisisForm({ onClose }) {
         latitude: lat,
         longitude: lng,
       };
-      
+
       await axios.post('http://localhost:3002/api/create', crisisPayload);
       setSubmitted(true);
     } catch (error) {
       console.error(error);
       alert('Error creating crisis. Please try again.');
     }
-    
+
     setSubmitting(false);
   };
 
@@ -122,7 +124,7 @@ export default function CrisisForm({ onClose }) {
       contactPhone: ""
     });
     setSubmitted(false);
-    
+
     // Call the onClose prop to close the modal
     if (onClose) onClose();
   };
@@ -141,6 +143,14 @@ export default function CrisisForm({ onClose }) {
       contactEmail: "",
       contactPhone: ""
     });
+  };
+
+  const openBuyAid = () => {
+    setIsBuyAidOpen(true);
+  };
+
+  const closeBuyAid = () => {
+    setIsBuyAidOpen(false);
   };
 
   return (
@@ -406,16 +416,12 @@ export default function CrisisForm({ onClose }) {
                   <div>
                     <label className="block text-sm font-medium mb-2">Critical Needs (List top 3)</label>
                     <div className="space-y-2">
-                      {formData.criticalNeeds.map((need, index) => (
-                        <input
-                          key={index}
-                          type="text"
-                          value={need}
-                          onChange={(e) => handleCriticalNeedChange(index, e.target.value)}
-                          placeholder={`Need #${index + 1} (e.g. Clean water, Medical supplies)`}
-                          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-yellow-500"
-                        />
-                      ))}
+                      <button
+                        onClick={openBuyAid}
+                        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white hover:bg-gray-700/80 focus:outline-none focus:border-yellow-500"
+                      >
+                        Buy Aid
+                      </button>
                     </div>
                   </div>
 
@@ -528,6 +534,7 @@ export default function CrisisForm({ onClose }) {
           </div>
         )}
       </div>
+      {isBuyAidOpen && <BuyAid onClose={closeBuyAid} />}
     </div>
   );
 }

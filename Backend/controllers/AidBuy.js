@@ -25,3 +25,21 @@ exports.buyAid = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.getAidSummary = async (req, res) => {
+  try {
+    // Fetch all aids and select only aidType and totalCost
+    const aidSummary = await Aid.find({}, 'aidType totalCost');
+
+    res.status(200).json({
+      success: true,
+      data: aidSummary,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve aid summary',
+      error: error.message,
+    });
+  }
+};
