@@ -1,56 +1,69 @@
-🚨 ReliefChain – Transparent Disaster Relief Fund Tracking
-📌 Problem Statement
-Disaster relief funds often get misused due to lack of transparency and verification, leading to corruption, fraud, and denial of aid to genuine victims.
+# 🌍 ReliefChain
 
-💡 Solution
-ReliefChain is a blockchain-based platform that ensures transparency and accountability in disaster relief fund distribution. Using Solidity smart contracts and a secure backend, every transaction — from fund release to the final beneficiary — is recorded, traceable, and tamper-proof.
+**A Decentralized Disaster Relief Platform Built on Blockchain**
 
-🧠 Inspiration
-Real cases show how urgent this problem is:
+ReliefChain is a transparent, efficient, and tamper-proof donation system designed to help donors, verified NGOs, and affected families during natural disasters. Using Ethereum smart contracts, USDC/ETH donations, PoA cards, and QR-based tracking, ReliefChain ensures that every rupee/USDC donated reaches those who need it — with full visibility.
 
-Jammu & Kashmir (2017): ₹342.43 crore flood relief scam using fake documents.
+---
 
-Madhya Pradesh (2025): ₹23.8 crore relief fund fraud involving fake identities and fund redirection.
+## 🚨 Problem Statement
 
-🛠️ Tech Stack
-Solidity (Ethereum): Smart contracts for secure fund disbursement.
+Disaster relief efforts are often delayed, opaque, and mismanaged. Donors lack visibility, funds are often diverted or misused, and families struggle to access aid. ReliefChain solves this using blockchain transparency, decentralized access, and real-time verification.
 
-Node.js + Express: Backend APIs for data interaction and validation.
+---
 
-Next.js (React): Frontend for public dashboards and admin interfaces.
+## 🎯 Objective
 
-MongoDB: Storing verified user and NGO data.
+To provide a blockchain-powered platform where donors can:
+- Directly support specific disaster-hit regions
+- Trust that their contributions are used properly
+- Track the delivery of aid to affected families via QR-based PoA cards
 
-IPFS (optional): Secure off-chain document storage (e.g., ID proofs, photos).
+---
 
-✨ Key Features
-✅ Immutable fund tracking on blockchain
+## 🚀 Features
 
-✅ Role-based access: Admins, NGOs, Donors, and Beneficiaries
+- **Targeted Donations:** Donate ETH or USDC to specific disasters (e.g., floods in Bihar)
+- **Verified NGOs:** Only approved NGOs can raise aid requests and receive funds
+- **Real-Time Fund Allocation:** Aid requirements are posted by NGOs; donation amounts update live
+- **QR-Based PoA Cards:** Families receive QR codes; scanned to mark aid as “received”
+- **Smart Contract Driven:** Donations, aid logs, and fund allocation are fully on-chain
+- **Public Transparency:** Donors can track their impact on-chain and through the UI
+- **Aid Dashboard:** Visual overview of aid progress, pending needs, and delivered relief
 
-✅ Beneficiary registration with proof and verification
+---
 
-✅ Public dashboard for real-time fund tracking
+## 🧠 Tech Stack
 
-✅ Tamper-proof records of all transactions
+| Layer          | Tech                                |
+|----------------|-------------------------------------|
+| 💻 Frontend     | Next.js, React, Tailwind CSS         |
+| ⚙️ Backend      | Node.js, Express.js, MongoDB (optional) |
+| 🔗 Blockchain   | Ethereum, Solidity, Thirdweb SDK     |
+| 🪙 Tokens       | ETH, USDC (ERC-20)                   |
+| 👛 Wallets      | MetaMask, WalletConnect (via Thirdweb) |
+| 📦 Storage      | IPFS (PoA Cards) + MongoDB (optional off-chain logging) |
 
-📊 Use Case Example
-Government or verified donor uploads a fund via smart contract.
+---
 
-Admin approves verified NGOs or victims.
+## 🔄 Workflow
 
-Funds are disbursed in stages with transaction logs visible to the public.
+1. **NGO registers a disaster** with aid requirements (food packs, tents, etc.)
+2. **Donors view the disaster** and send ETH or USDC using their wallet
+3. **Funds are recorded on-chain**, deducted from total need
+4. **Aid is distributed**, and NGO scans family’s QR PoA Card
+5. **Aid status updates** from “Pending” to “Received”
+6. **Donors track their donation** and verify its impact
 
-Every action is recorded on-chain to ensure zero manipulation.
+---
 
-🚀 Future Scope
-Integration with government disaster portals (e.g., NDMA)
+## 🛠️ How to Run the Project
 
-Mobile app version for field use by officials/NGOs
-
-OTP-based beneficiary verification
-
-Support for multiple disaster types and zones
+### Prerequisites:
+- Node.js & npm
+- MetaMask (testnet setup)
 
 
-This project submission for the spark 7 hackathon participantts that is taking place at the moment in the Chitkara University, Punjab.
+### 1. Clone the repo
+https://github.com/niharsandhu/HackIndia-Spark-7-2025-Chai-and-Code
+
