@@ -141,10 +141,31 @@ const registerAidReceiver = async (req, res) => {
     return res.status(500).json({ message: 'Server error during Aid Receiver registration.' });
   }
 };
+const getAidReceiverQRCode = async (req, res) => {
+  try {
+    const { aidReceiverId } = req.params; // Extract aidReceiverId from request params
+
+    // Find Aid Receiver by ID
+    const aidReceiver = await AidReceiver.findById(aidReceiverId);
+    if (!aidReceiver) {
+      return res.status(404).json({ message: 'Aid Receiver not found.' });
+    }
+
+    // Return the QR code image
+    return res.status(200).json({
+      message: 'QR code fetched successfully.',
+      qrCode: aidReceiver.qrCode
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Server error while fetching QR code.' });
+  }
+};
 
 
 module.exports = {
   registerNGO,
   registerDonor,
   registerAidReceiver
+  ,getAidReceiverQRCode
 };

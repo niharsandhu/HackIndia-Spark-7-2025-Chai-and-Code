@@ -42,7 +42,6 @@ const Login = () => {
       // Store token and user ID in localStorage
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('userId', res.data.ngoId || res.data.donorId || res.data.aidReceiverId);
-
       alert(`${role.toUpperCase()} login successful!`);
 
       // Redirect based on role
