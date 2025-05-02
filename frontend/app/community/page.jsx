@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import dynamic from 'next/dynamic';
 import Navbar from "@/components/navbar";
 import { AlertTriangle, Heart, MessageCircle, Share2, Users, Flame, TrendingUp, ArrowRight, Info, Activity, Globe, Eye, ExternalLink, ChevronDown, Search, Bell, Menu, X } from "lucide-react";
-import CrisisReportForm from "@/components/CrisisReportForm"; 
+import CrisisReportForm from "@/components/CrisisReportForm";
 import axios from "axios";
 
 const MotionDiv = dynamic(() => import('framer-motion').then(mod => mod.motion.div), { ssr: false });
@@ -25,16 +25,20 @@ export default function DisasterReliefCommunity() {
   const [hoveredCard, setHoveredCard] = useState(null);
   const [isReportFormOpen, setIsReportFormOpen] = useState(false);
   const [disasters, setDisasters] = useState([]);
-
   const [donorId, setDonorId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
-useEffect(() => {
-  const storedUserId = localStorage.getItem("userId");
-  if (storedUserId) {
-    setDonorId(storedUserId);
-    console.log("Fetched donorId from localStorage:", storedUserId);
-  }
-}, []);
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+    const storedUserRole = localStorage.getItem("userRole");
+    if (storedUserId) {
+      setDonorId(storedUserId);
+      console.log("Fetched donorId from localStorage:", storedUserId);
+    }
+    if (storedUserRole) {
+      setUserRole(storedUserRole);
+    }
+  }, []);
 
   // Fetch disasters from the API
   useEffect(() => {
@@ -85,26 +89,9 @@ useEffect(() => {
       console.error("Donation failed:", error);
     }
   };
-  
-  const [aidSummary, setAidSummary] = useState([]);
-
-useEffect(() => {
-  const fetchAidSummary = async () => {
-    try {
-      const response = await axios.get("http://localhost:3002/api/aid-summary");
-      setAidSummary(response.data.data); // assuming response format matches the controller
-      console.log("Fetched aid summary:", response.data.data);
-    } catch (error) {
-      console.error("Error fetching aid summary:", error);
-    }
-  };
-
-  fetchAidSummary();
-}, []);
-
 
   // Sort disasters by severity
-  const sortedDisasters = [...disasters].sort((a, b) => 
+  const sortedDisasters = [...disasters].sort((a, b) =>
     (b.situationRating || 0) - (a.situationRating || 0)
   );
 
@@ -135,7 +122,7 @@ useEffect(() => {
   // Open modal with specific disaster data
   const openDisasterModal = (disaster) => {
     setCurrentDisaster(disaster);
-    setSelectedNgoId(disaster.ngoId._id); 
+    setSelectedNgoId(disaster.ngoId._id);
     setIsModalOpen(true);
   };
 
@@ -174,6 +161,7 @@ useEffect(() => {
     if (severity >= 5) return "Moderate";
     return "Developing";
   };
+
   return (
     <>
       <div className="min-h-screen bg-black text-white">
@@ -290,23 +278,20 @@ useEffect(() => {
             </MotionDiv>
 
             <div className="flex flex-col md:flex-row gap-4">
-              <MotionDiv
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-yellow-500  text-white px-8 py-3 rounded-full font-semibold flex items-center justify-center shadow-lg shadow-red-600/20"
-                onClick={openReportForm}
-              >
-                <AlertTriangle className="mr-2 h-5 w-5" />
-                Report Emergency
-              </MotionDiv>
-              <MotionDiv
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-black border border-gray-700 text-white px-8 py-3 rounded-full hover:bg-white/10 transition flex items-center justify-center"
-              >
-                <Users className="mr-2 h-5 w-5 text-yellow-400" />
-                <span>Become a Volunteer</span>
-              </MotionDiv>
+           
+                <MotionDiv
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-gradient-to-r from-yellow-500 text-white px-8 py-3 rounded-full font-semibold flex items-center justify-center shadow-lg shadow-red-600/20"
+                  onClick={openReportForm}
+                >
+                  <AlertTriangle className="mr-2 h-5 w-5" />
+                  Report Emergency
+                </MotionDiv>
+        
+            
+                
+            
             </div>
           </div>
         </div>
@@ -357,149 +342,148 @@ useEffect(() => {
 
           {/* Enhanced Disaster cards grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {sortedDisasters.map((disaster, index) => (
-            <MotionDiv
-              key={disaster.id ?? `disaster-${index}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="bg-black backdrop-blur-sm rounded-xl overflow-hidden shadow-xl border border-gray-700 hover:border-yellow-500/50 transition-all duration-300 cursor-pointer group"
-              onClick={() => openDisasterModal(disaster)}
-              onMouseEnter={() => setHoveredCard(disaster.id)}
-              onMouseLeave={() => setHoveredCard(null)}
-            >
-              {/* Severity indicator */}
-              <div className="flex justify-between items-center px-4 py-2 bg-gray-900/80">
-                <div className="flex items-center">
-                  <div
-                    className={`w-3 h-3 rounded-full mr-2 ${
-                      disaster.situationRating >= 9
-                        ? "bg-red-500 animate-pulse"
-                        : disaster.situationRating >= 7
-                        ? "bg-orange-500"
-                        : "bg-yellow-500"
-                    }`}
-                  ></div>
-                  <span
-                    className={`text-sm font-medium ${getSeverityColor(
-                      disaster.situationRating
-                    )}`}
-                  >
-                    {getSeverityLabel(disaster.situationRating)} (
-                    {typeof disaster.situationRating === "number"
-                      ? disaster.situationRating.toFixed(1)
-                      : "N/A"}
-                    )
-                  </span>
-                </div>
-                <span className="text-sm text-gray-400">{disaster.timeline}</span>
-              </div>
-
-              {/* Cover image */}
-              <div className="relative h-48 overflow-hidden">
-                <Image
-                  src={disaster.coverImage || "/api/placeholder/800/600"}
-                  alt={disaster.title || "Disaster"}
-                  fill
-                  className="object-cover transform transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent h-24"></div>
-                <div className="absolute bottom-0 left-0 p-4">
-                  <div className="flex items-center mb-2">
-                    <div className="w-8 h-8 rounded-full overflow-hidden mr-2 bg-gray-700 border border-gray-600">
-                      <Image
-                        src={disaster.logo || "/api/placeholder/32/32"}
-                        alt={disaster.organization || "Organization"}
-                        width={32}
-                        height={32}
-                      />
-                    </div>
-                    <span className="text-sm font-medium">{disaster.ngoId?.name}</span>
-                  </div>
-                </div>
-
-                {/* Quick action buttons on hover */}
-                <MotionDiv
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: hoveredCard === disaster.id ? 1 : 0 }}
-                  className="absolute top-2 right-2 flex gap-2"
-                >
-                  <button className="p-2 bg-gray-800/80 backdrop-blur-sm rounded-full hover:bg-red-500/80 transition-colors">
-                    <Heart className="h-4 w-4" />
-                  </button>
-                  <button className="p-2 bg-gray-800/80 backdrop-blur-sm rounded-full hover:bg-blue-500/80 transition-colors">
-                    <Share2 className="h-4 w-4" />
-                  </button>
-                </MotionDiv>
-              </div>
-
-              {/* Content */}
-              <div className="p-4">
-                <h3 className="text-xl font-semibold mb-1 group-hover:text-yellow-400 transition-colors">
-                  {disaster.name}
-                </h3>
-                <p className="text-sm text-gray-400 mb-3 flex items-center">
-                  <Globe className="h-3 w-3 mr-1" />
-                  {disaster.place}
-                </p>
-
-                <p className="text-sm text-gray-300 mb-4 line-clamp-3">
-                  {disaster.description}
-                </p>
-
-                {/* Progress bar */}
-                <div className="mb-2">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>₹{disaster.ngoId?.totalDonationReceived ?? 0} raised</span>
-                    <span>₹{disaster.fundsRequired ?? 0} goal</span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
-                    <MotionDiv
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: `${getProgressPercentage(
-                          disaster.raised ?? 0,
-                          disaster.fundsRequired ?? 1
-                        )}%`,
-                      }}
-                      transition={{ duration: 1, delay: 0.2 }}
-                      className="bg-gradient-to-r from-yellow-500 to-yellow-600 h-full rounded-full relative"
+            {sortedDisasters.map((disaster, index) => (
+              <MotionDiv
+                key={disaster.id ?? `disaster-${index}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-black backdrop-blur-sm rounded-xl overflow-hidden shadow-xl border border-gray-700 hover:border-yellow-500/50 transition-all duration-300 cursor-pointer group"
+                onClick={() => openDisasterModal(disaster)}
+                onMouseEnter={() => setHoveredCard(disaster.id)}
+                onMouseLeave={() => setHoveredCard(null)}
+              >
+                {/* Severity indicator */}
+                <div className="flex justify-between items-center px-4 py-2 bg-gray-900/80">
+                  <div className="flex items-center">
+                    <div
+                      className={`w-3 h-3 rounded-full mr-2 ${
+                        disaster.situationRating >= 9
+                          ? "bg-red-500 animate-pulse"
+                          : disaster.situationRating >= 7
+                          ? "bg-orange-500"
+                          : "bg-yellow-500"
+                      }`}
+                    ></div>
+                    <span
+                      className={`text-sm font-medium ${getSeverityColor(
+                        disaster.situationRating
+                      )}`}
                     >
-                      <div className="absolute top-0 left-0 w-full h-full bg-white opacity-30 rounded-full animate-pulse"></div>
-                    </MotionDiv>
+                      {getSeverityLabel(disaster.situationRating)} ({typeof disaster.situationRating === "number"
+                        ? disaster.situationRating.toFixed(1)
+                        : "N/A"})
+                    </span>
                   </div>
+                  <span className="text-sm text-gray-400">{disaster.timeline}</span>
                 </div>
 
-                {/* Latest update */}
-                {disaster.updates && disaster.updates[0] && (
-                  <div className="bg-gray-700/30 backdrop-blur-sm rounded-lg p-3 mb-4 text-sm border border-gray-700 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent to-gray-900 opacity-20"></div>
-                    <div className="relative z-10">
-                      <p className="font-medium text-orange-300 mb-1">
-                        Latest Update • {disaster.updates[0].time}
-                      </p>
-                      <p>{disaster.updates[0].text}</p>
+                {/* Cover image */}
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={disaster.coverImage || "/api/placeholder/800/600"}
+                    alt={disaster.title || "Disaster"}
+                    fill
+                    className="object-cover transform transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent h-24"></div>
+                  <div className="absolute bottom-0 left-0 p-4">
+                    <div className="flex items-center mb-2">
+                      <div className="w-8 h-8 rounded-full overflow-hidden mr-2 bg-gray-700 border border-gray-600">
+                        <Image
+                          src={disaster.logo || "/api/placeholder/32/32"}
+                          alt={disaster.organization || "Organization"}
+                          width={32}
+                          height={32}
+                        />
+                      </div>
+                      <span className="text-sm font-medium">{disaster.ngoId?.name}</span>
                     </div>
                   </div>
-                )}
-              </div>
-            </MotionDiv>
-          ))}
-</div>
-   {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-1/2">
-            <h2 className="text-2xl font-semibold">{currentDisaster?.ngoId?.name}</h2>
-            <p>{currentDisaster?.description}</p>
-            <button
-              onClick={closeModal}
-              className="mt-4 p-2 bg-red-500 text-white rounded"
-            >
-              Close
-            </button>
+
+                  {/* Quick action buttons on hover */}
+                  <MotionDiv
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: hoveredCard === disaster.id ? 1 : 0 }}
+                    className="absolute top-2 right-2 flex gap-2"
+                  >
+                    <button className="p-2 bg-gray-800/80 backdrop-blur-sm rounded-full hover:bg-red-500/80 transition-colors">
+                      <Heart className="h-4 w-4" />
+                    </button>
+                    <button className="p-2 bg-gray-800/80 backdrop-blur-sm rounded-full hover:bg-blue-500/80 transition-colors">
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                  </MotionDiv>
+                </div>
+
+                {/* Content */}
+                <div className="p-4">
+                  <h3 className="text-xl font-semibold mb-1 group-hover:text-yellow-400 transition-colors">
+                    {disaster.name}
+                  </h3>
+                  <p className="text-sm text-gray-400 mb-3 flex items-center">
+                    <Globe className="h-3 w-3 mr-1" />
+                    {disaster.place}
+                  </p>
+
+                  <p className="text-sm text-gray-300 mb-4 line-clamp-3">
+                    {disaster.description}
+                  </p>
+
+                  {/* Progress bar */}
+                  <div className="mb-2">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>{disaster.ngoId?.totalDonationReceived ?? 0}Eth raised</span>
+                      <span>{disaster.fundsRequired ?? 0}Eth  goal</span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                      <MotionDiv
+                        initial={{ width: 0 }}
+                        animate={{
+                          width: `${getProgressPercentage(
+                            disaster.raised ?? 0,
+                            disaster.fundsRequired ?? 1
+                          )}%`,
+                        }}
+                        transition={{ duration: 1, delay: 0.2 }}
+                        className="bg-gradient-to-r from-yellow-500 to-yellow-600 h-full rounded-full relative"
+                      >
+                        <div className="absolute top-0 left-0 w-full h-full bg-white opacity-30 rounded-full animate-pulse"></div>
+                      </MotionDiv>
+                    </div>
+                  </div>
+
+                  {/* Latest update */}
+                  {disaster.updates && disaster.updates[0] && (
+                    <div className="bg-gray-700/30 backdrop-blur-sm rounded-lg p-3 mb-4 text-sm border border-gray-700 relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent to-gray-900 opacity-20"></div>
+                      <div className="relative z-10">
+                        <p className="font-medium text-orange-300 mb-1">
+                          Latest Update • {disaster.updates[0].time}
+                        </p>
+                        <p>{disaster.updates[0].text}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </MotionDiv>
+            ))}
           </div>
-        </div>
-      )}
+
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-6 rounded-lg w-1/2">
+                <h2 className="text-2xl font-semibold">{currentDisaster?.ngoId?.name}</h2>
+                <p>{currentDisaster?.description}</p>
+                <button
+                  onClick={closeModal}
+                  className="mt-4 p-2 bg-red-500 text-white rounded"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Donation Impact Section */}
@@ -509,38 +493,38 @@ useEffect(() => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="bg-gray-800/50 rounded-xl p-6 text-center">
-                <div className="text-5xl font-bold text-orange-500 mb-2">$25</div>
+                <div className="text-5xl font-bold text-orange-500 mb-2">25 Eth</div>
                 <p className="text-lg mb-4">Provides emergency food for a family of four for one week</p>
                 <MotionDiv
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg"
                 >
-                  Donate $25
+                  Donate 25 Eth
                 </MotionDiv>
               </div>
 
               <div className="bg-gray-800/50 rounded-xl p-6 text-center transform scale-110 shadow-lg border border-red-500/30">
-                <div className="text-5xl font-bold text-red-500 mb-2">$100</div>
+                <div className="text-5xl font-bold text-red-500 mb-2">100 Eth</div>
                 <p className="text-lg mb-4">Supplies clean water, shelter kits, and medical aid for a displaced family</p>
                 <MotionDiv
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg"
                 >
-                  Donate $100
+                  Donate 100 Eth
                 </MotionDiv>
               </div>
 
               <div className="bg-gray-800/50 rounded-xl p-6 text-center">
-                <div className="text-5xl font-bold text-blue-500 mb-2">$500</div>
+                <div className="text-5xl font-bold text-blue-500 mb-2">500 Eth</div>
                 <p className="text-lg mb-4">Funds rescue operations and critical infrastructure repairs</p>
                 <MotionDiv
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg"
                 >
-                  Donate $500
+                  Donate 500 Eth
                 </MotionDiv>
               </div>
             </div>
@@ -718,20 +702,32 @@ useEffect(() => {
                 </div>
 
                 {/* Impact statistics */}
-               {/* Aid Summary Statistics */}
-{aidSummary.length > 0 && (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    {aidSummary.map((aid, index) => (
-      <div key={index} className="bg-gray-800/50 rounded-lg p-4 text-center">
-        <p className="text-sm text-gray-400">Aid Type</p>
-        <p className="text-xl font-semibold text-blue-400">{aid.aidType}</p>
-        <p className="text-sm text-gray-400 mt-2">Total Cost</p>
-        <p className="text-2xl font-bold text-green-400">₹{aid.totalCost}</p>
-      </div>
-    ))}
-  </div>
-)}
-
+                {currentDisaster.impactStats && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div className="bg-gray-800/50 rounded-lg p-4 text-center">
+                      <p className="text-sm text-gray-400">People Affected</p>
+                      <p className="text-2xl font-bold text-red-400">
+                        {currentDisaster.impactStats.peopleAffected || "Unknown"}
+                      </p>
+                    </div>
+                    <div className="bg-gray-800/50 rounded-lg p-4 text-center">
+                      <p className="text-sm text-gray-400">Area Affected</p>
+                      <p className="text-2xl font-bold text-orange-400">
+                        {currentDisaster.impactStats.areaAffected || "Unknown"}
+                      </p>
+                    </div>
+                    <div className="bg-gray-800/50 rounded-lg p-4 text-center">
+                      <p className="text-sm text-gray-400">Critical Needs</p>
+                      <div className="flex flex-wrap justify-center gap-2 mt-2">
+                        {currentDisaster.impactStats.criticalNeeds?.map((need, i) => (
+                          <span key={i} className="bg-gray-600 px-2 py-1 rounded text-sm">
+                            {need}
+                          </span>
+                        )) || <span className="text-gray-400">Data unavailable</span>}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Progress bar */}
                 <div className="mb-6">
@@ -765,9 +761,9 @@ useEffect(() => {
                     </MotionDiv>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>₹{(currentDisaster.ngoId.totalDonationReceived || 0).toLocaleString()} raised</span>
+                    <span>{(currentDisaster.ngoId.totalDonationReceived || 0).toLocaleString()}Eth raised</span>
                     <span>
-                      ₹{(currentDisaster.fundsRequired || 0).toLocaleString()} goal
+                      {(currentDisaster.fundsRequired || 0).toLocaleString()}Eth goal
                     </span>
                   </div>
                 </div>
@@ -786,62 +782,62 @@ useEffect(() => {
                     </div>
                   </div>
                 )}
+
                 {/* Donation options */}
-  {/* Donation options */}
-<div className="mb-6">
-  <h4 className="text-xl font-semibold mb-4">Make a Donation</h4>
-  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-    {[25, 50, 100].map((amount) => (
-      <MotionDiv
-        key={amount}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => handleDonate(selectedNgoId, amount)}
-        className={`cursor-pointer ${
-          amount === 100 ? "bg-red-600 hover:bg-red-700" : "bg-gray-700 hover:bg-gray-600"
-        } rounded-lg p-3 text-center`}
-      >
-        <div className="text-lg font-bold">${amount}</div>
-        <div className="text-sm text-gray-400">{amount === 100 ? "Popular" : "One-time"}</div>
-      </MotionDiv>
-    ))}
+                <div className="mb-6">
+                  <h4 className="text-xl font-semibold mb-4">Make a Donation</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                    {[25, 50, 100].map((amount) => (
+                      <MotionDiv
+                        key={amount}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleDonate(selectedNgoId, amount)}
+                        className={`cursor-pointer ${
+                          amount === 100 ? "bg-red-600 hover:bg-red-700" : "bg-gray-700 hover:bg-gray-600"
+                        } rounded-lg p-3 text-center`}
+                      >
+                        <div className="text-lg font-bold">{amount}Eth</div>
+                        <div className="text-sm text-gray-400">{amount === 100 ? "Popular" : "One-time"}</div>
+                      </MotionDiv>
+                    ))}
 
-    {/* Custom amount (could be made interactive later) */}
-    <MotionDiv
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 text-center"
-    >
-      <div className="text-lg font-bold">Custom</div>
-      <div className="text-sm text-gray-400">Any amount</div>
-    </MotionDiv>
-  </div>
+                    {/* Custom amount (could be made interactive later) */}
+                    <MotionDiv
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-gray-700 hover:bg-gray-600 rounded-lg p-3 text-center"
+                    >
+                      <div className="text-lg font-bold">Custom</div>
+                      <div className="text-sm text-gray-400">Any amount</div>
+                    </MotionDiv>
+                  </div>
 
-  {/* Main donate and interaction buttons */}
-  <div className="flex gap-4 mb-4">
-    <MotionDiv
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={() => handleDonate(selectedNgoId, donationAmount)}
-      className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-lg flex items-center justify-center cursor-pointer"
-    >
-      Donate ₹{donationAmount}
-    </MotionDiv>
-    <MotionDiv
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="bg-gray-700 hover:bg-gray-600 py-3 px-4 rounded-lg flex items-center justify-center cursor-pointer"
-    >
-      <Heart className="h-5 w-5" />
-    </MotionDiv>
-    <MotionDiv
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className="bg-gray-700 hover:bg-gray-600 py-3 px-4 rounded-lg flex items-center justify-center cursor-pointer"
-    >
-      <Share2 className="h-5 w-5" />
-    </MotionDiv>
-  </div>
+                  {/* Main donate and interaction buttons */}
+                  <div className="flex gap-4 mb-4">
+                    <MotionDiv
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleDonate(selectedNgoId, donationAmount)}
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-3 rounded-lg flex items-center justify-center cursor-pointer"
+                    >
+                      Donate {donationAmount}Eth
+                    </MotionDiv>
+                    <MotionDiv
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-gray-700 hover:bg-gray-600 py-3 px-4 rounded-lg flex items-center justify-center cursor-pointer"
+                    >
+                      <Heart className="h-5 w-5" />
+                    </MotionDiv>
+                    <MotionDiv
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="bg-gray-700 hover:bg-gray-600 py-3 px-4 rounded-lg flex items-center justify-center cursor-pointer"
+                    >
+                      <Share2 className="h-5 w-5" />
+                    </MotionDiv>
+                  </div>
 
                   <div className="bg-gray-700/30 rounded-lg p-4 text-sm">
                     <p className="mb-2">Your donation is tax-deductible. You'll receive a receipt via email.</p>
@@ -872,7 +868,7 @@ useEffect(() => {
                     </div>
                     <div className="bg-gray-700 rounded-lg p-4 flex flex-col items-center text-center">
                       <svg className="h-8 w-8 text-purple-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                       </svg>
                       <h5 className="font-medium mb-1">Supply Donations</h5>
                       <p className="text-sm text-gray-300">Contribute needed items and supplies</p>

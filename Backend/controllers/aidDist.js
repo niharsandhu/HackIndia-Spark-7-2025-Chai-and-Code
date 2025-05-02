@@ -40,3 +40,48 @@ exports.scannerDistributeAid = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+
+exports.getReceiverDetails = async (req, res) => {
+  try {
+    const { receiverId } = req.params;
+
+    // Fetch AidReceiver with crisis name populated
+    const receiver = await AidReceiver.findById(receiverId)
+      .populate('crisisId', 'name') // assuming Crisis model has a 'name' field
+      .lean();
+
+    if (!receiver) {
+      return res.status(404).json({ message: 'Aid receiver not found' });
+    }
+
+    // Fetch all aid distributions related to this receiver
+   // Correct field name used for population: 'aidType' instead of 'type'
+const distributions = await AidDistribution.find({ aidReceiverId: receiverId })
+.populate('aidId', 'aidType')
+.select('quantityGiven dateGiven aidId')
+.lean();
+
+const response = {
+familyLeaderName: receiver.familyLeaderName,
+noOfFamilyMembers: receiver.noOfFamilyMembers,
+location: {
+  latitude: receiver.latitude,
+  longitude: receiver.longitude,
+},
+crisisName: receiver.crisisId?.name || 'Unknown',
+aidReceived: distributions.map(dist => ({
+  aidType: dist.aidId?.aidType || 'Unknown',
+  quantity: dist.quantityGiven,
+  date: dist.dateGiven,
+}))
+};
+
+
+    res.status(200).json(response);
+
+  } catch (error) {
+    console.error('Error fetching receiver details:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
